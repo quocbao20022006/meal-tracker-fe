@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
 import { ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import Header from '../components/Header';
 
@@ -21,14 +21,16 @@ interface MealPlan {
 }
 
 export default function Planner() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [currentWeek, setCurrentWeek] = useState(getWeekDates(new Date()));
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) loadWeekMeals();
-  }, [user, currentWeek]);
+    // if (user) loadWeekMeals();
+    loadWeekMeals();
+  }, [currentWeek]);
 
   function getWeekDates(date: Date) {
     const curr = new Date(date);
@@ -45,19 +47,19 @@ export default function Planner() {
   }
 
   const loadWeekMeals = async () => {
-    if (!user) return;
+    // if (!user) return;
 
-    const startDate = currentWeek[0].toISOString().split('T')[0];
-    const endDate = currentWeek[6].toISOString().split('T')[0];
+    // const startDate = currentWeek[0].toISOString().split('T')[0];
+    // const endDate = currentWeek[6].toISOString().split('T')[0];
 
-    const { data } = await supabase
-      .from('meal_plans')
-      .select('*, meals(name, calories, protein, carbs, fats, image_url)')
-      .eq('user_id', user.id)
-      .gte('date', startDate)
-      .lte('date', endDate);
+    // const { data } = await supabase
+    //   .from('meal_plans')
+    //   .select('*, meals(name, calories, protein, carbs, fats, image_url)')
+    //   .eq('user_id', user.id)
+    //   .gte('date', startDate)
+    //   .lte('date', endDate);
 
-    if (data) setMealPlans(data);
+    // if (data) setMealPlans(data);
     setLoading(false);
   };
 

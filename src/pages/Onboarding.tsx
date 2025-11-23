@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
 import { User, Scale, Calendar, Users } from 'lucide-react';
 
 export default function Onboarding() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,20 +58,22 @@ export default function Onboarding() {
       const bmiCategory = getBMICategory(bmi);
       const dailyCalories = calculateDailyCalories(weight, height, age, formData.gender);
 
-      const { error: insertError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: user!.id,
-          height,
-          weight,
-          age,
-          gender: formData.gender,
-          bmi: parseFloat(bmi.toFixed(2)),
-          bmi_category: bmiCategory,
-          daily_calorie_goal: dailyCalories
-        });
+      // const { error: insertError } = await supabase
+      //   .from('user_profiles')
+      //   .insert({
+      //     id: user!.id,
+      //     height,
+      //     weight,
+      //     age,
+      //     gender: formData.gender,
+      //     bmi: parseFloat(bmi.toFixed(2)),
+      //     bmi_category: bmiCategory,
+      //     daily_calorie_goal: dailyCalories
+      //   });
 
-      if (insertError) throw insertError;
+      // if (insertError) throw insertError;
+      // Mock insert
+      console.log('Mock profile saved:', { user, height, weight, age, gender: formData.gender, bmi: parseFloat(bmi.toFixed(2)), bmi_category: bmiCategory, daily_calorie_goal: dailyCalories });
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');

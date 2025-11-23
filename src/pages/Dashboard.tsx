@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
 import { Clock, Flame, TrendingUp, Plus } from 'lucide-react';
 import Header from '../components/Header';
 
@@ -34,35 +34,36 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
-  }, [user]);
+  }, []);
 
   const loadDashboardData = async () => {
-    if (!user) return;
+    // if (!user) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    // const today = new Date().toISOString().split('T')[0];
 
-    const [mealsResult, profileResult] = await Promise.all([
-      supabase
-        .from('meal_plans')
-        .select('*, meals(*)')
-        .eq('user_id', user.id)
-        .eq('date', today),
-      supabase
-        .from('user_profiles')
-        .select('daily_calorie_goal, bmi, bmi_category')
-        .eq('id', user.id)
-        .maybeSingle()
-    ]);
+    // const [mealsResult, profileResult] = await Promise.all([
+    //   supabase
+    //     .from('meal_plans')
+    //     .select('*, meals(*)')
+    //     .eq('user_id', user.id)
+    //     .eq('date', today),
+    //   supabase
+    //     .from('user_profiles')
+    //     .select('daily_calorie_goal, bmi, bmi_category')
+    //     .eq('id', user.id)
+    //     .maybeSingle()
+    // ]);
 
-    if (mealsResult.data) setTodayMeals(mealsResult.data);
-    if (profileResult.data) setProfile(profileResult.data);
+    // if (mealsResult.data) setTodayMeals(mealsResult.data);
+    // if (profileResult.data) setProfile(profileResult.data);
     setLoading(false);
   };
 

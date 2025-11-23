@@ -1,5 +1,5 @@
 import { Home, Utensils, History, BookOpen, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface SidebarProps {
@@ -8,8 +8,14 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
-  const { signOut } = useAuth();
+  // const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+
+  const handleLogout = async () => {
+    // await signOut();
+    // Mock logout
+    console.log('Mock logout');
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -69,7 +75,7 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
           </span>
         </button>
         <button
-          onClick={signOut}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />

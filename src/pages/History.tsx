@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
 import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 import Header from '../components/Header';
 
@@ -14,58 +14,64 @@ interface DailyStats {
 }
 
 export default function History() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [period, setPeriod] = useState<'week' | 'month'>('week');
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // useEffect(() => {
+  //   if (user) loadHistory();
+  // }, [user, period]);
+
   useEffect(() => {
-    if (user) loadHistory();
-  }, [user, period]);
+    loadHistory();
+  }, [period]);
 
   const loadHistory = async () => {
-    if (!user) return;
+    // if (!user) return;
 
-    const days = period === 'week' ? 7 : 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    const startDateStr = startDate.toISOString().split('T')[0];
+    // const days = period === 'week' ? 7 : 30;
+    // const startDate = new Date();
+    // startDate.setDate(startDate.getDate() - days);
+    // const startDateStr = startDate.toISOString().split('T')[0];
 
-    const { data } = await supabase
-      .from('meal_plans')
-      .select('date, servings, meals(calories, protein, carbs, fats)')
-      .eq('user_id', user.id)
-      .gte('date', startDateStr)
-      .eq('completed', true);
+    // const { data } = await supabase
+    //   .from('meal_plans')
+    //   .select('date, servings, meals(calories, protein, carbs, fats)')
+    //   .eq('user_id', user.id)
+    //   .gte('date', startDateStr)
+    //   .eq('completed', true);
 
-    if (data) {
-      const dailyData: { [key: string]: DailyStats } = {};
+    // if (data) {
+    //   const dailyData: { [key: string]: DailyStats } = {};
 
-      data.forEach((mp) => {
-        if (!dailyData[mp.date]) {
-          dailyData[mp.date] = {
-            date: mp.date,
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fats: 0,
-            mealCount: 0
-          };
-        }
+    //   data.forEach((mp) => {
+    //     if (!dailyData[mp.date]) {
+      //     if (!dailyData[mp.date]) {
+    //       dailyData[mp.date] = {
+    //         date: mp.date,
+    //         calories: 0,
+    //         protein: 0,
+    //         carbs: 0,
+    //         fats: 0,
+    //         mealCount: 0
+    //       };
+    //     }
 
-        dailyData[mp.date].calories += mp.meals.calories * mp.servings;
-        dailyData[mp.date].protein += mp.meals.protein * mp.servings;
-        dailyData[mp.date].carbs += mp.meals.carbs * mp.servings;
-        dailyData[mp.date].fats += mp.meals.fats * mp.servings;
-        dailyData[mp.date].mealCount += 1;
-      });
+    //     dailyData[mp.date].calories += mp.meals.calories * mp.servings;
+    //     dailyData[mp.date].protein += mp.meals.protein * mp.servings;
+    //     dailyData[mp.date].carbs += mp.meals.carbs * mp.servings;
+    //     dailyData[mp.date].fats += mp.meals.fats * mp.servings;
+    //     dailyData[mp.date].mealCount += 1;
+    //   });
 
-      const statsArray = Object.values(dailyData).sort((a, b) =>
-        a.date.localeCompare(b.date)
-      );
+    //   const statsArray = Object.values(dailyData).sort((a, b) =>
+    //     a.date.localeCompare(b.date)
+    //   );
 
-      setStats(statsArray);
-    }
+    //   setStats(statsArray);
+    // }
 
     setLoading(false);
   };

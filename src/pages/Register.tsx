@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { UserPlus, Mail, Lock } from 'lucide-react';
 
 interface RegisterProps {
@@ -12,7 +12,7 @@ export default function Register({ onToggle }: RegisterProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  // const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,10 +29,12 @@ export default function Register({ onToggle }: RegisterProps) {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password);
-    if (error) {
-      setError(error.message || 'Failed to create account');
-    }
+    // const { error } = await signUp(email, password);
+    // if (error) {
+    //   setError(error.message || 'Failed to create account');
+    // }
+    // Mock registration
+    setError('');
     setLoading(false);
   };
 

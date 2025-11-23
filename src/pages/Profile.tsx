@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
 import { User, Scale, TrendingUp, Target, Save } from 'lucide-react';
 import Header from '../components/Header';
 
@@ -15,7 +15,8 @@ interface UserProfile {
 }
 
 export default function Profile() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,28 +31,29 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (user) loadProfile();
-  }, [user]);
+    // if (user) loadProfile();
+    loadProfile();
+  }, []);
 
   const loadProfile = async () => {
-    if (!user) return;
+    // if (!user) return;
 
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+    // const { data } = await supabase
+    //   .from('user_profiles')
+    //   .select('*')
+    //   .eq('id', user.id)
+    //   .maybeSingle();
 
-    if (data) {
-      setProfile(data);
-      setFormData({
-        height: data.height.toString(),
-        weight: data.weight.toString(),
-        age: data.age.toString(),
-        gender: data.gender,
-        daily_calorie_goal: data.daily_calorie_goal.toString()
-      });
-    }
+    // if (data) {
+    //   setProfile(data);
+    //   setFormData({
+    //     height: data.height.toString(),
+    //     weight: data.weight.toString(),
+    //     age: data.age.toString(),
+    //     gender: data.gender,
+    //     daily_calorie_goal: data.daily_calorie_goal.toString()
+    //   });
+    // }
     setLoading(false);
   };
 
@@ -68,7 +70,7 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    // if (!user) return;
 
     setSaving(true);
     const weight = parseFloat(formData.weight);
@@ -79,25 +81,28 @@ export default function Profile() {
     const bmi = calculateBMI(weight, height);
     const bmiCategory = getBMICategory(bmi);
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({
-        height,
-        weight,
-        age,
-        gender: formData.gender,
-        bmi: parseFloat(bmi.toFixed(2)),
-        bmi_category: bmiCategory,
-        daily_calorie_goal: dailyCalorieGoal,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
+    // const { error } = await supabase
+    //   .from('user_profiles')
+    //   .update({
+    //     height,
+    //     weight,
+    //     age,
+    //     gender: formData.gender,
+    //     bmi: parseFloat(bmi.toFixed(2)),
+    //     bmi_category: bmiCategory,
+    //     daily_calorie_goal: dailyCalorieGoal,
+    //     updated_at: new Date().toISOString()
+    //   })
+    //   .eq('id', user.id);
 
-    if (!error) {
-      await loadProfile();
-      setEditing(false);
-    }
-
+    // if (!error) {
+    //   await loadProfile();
+    //   setEditing(false);
+    // }
+    
+    // Mock save
+    await loadProfile();
+    setEditing(false);
     setSaving(false);
   };
 

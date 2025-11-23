@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+// import { supabase } from '../lib/supabase';
+// import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, Clock, Users, Flame, Plus } from 'lucide-react';
 
 interface Ingredient {
@@ -36,7 +36,8 @@ interface MealDetailProps {
 }
 
 export default function MealDetail({ mealId, onBack }: MealDetailProps) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'recipe' | 'nutrition'>('ingredients');
@@ -47,13 +48,13 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
   }, [mealId]);
 
   const loadMeal = async () => {
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('id', mealId)
-      .maybeSingle();
+    // const { data } = await supabase
+    //   .from('meals')
+    //   .select('*')
+    //   .eq('id', mealId)
+    //   .maybeSingle();
 
-    if (data) setMeal(data);
+    // if (data) setMeal(data);
     setLoading(false);
   };
 

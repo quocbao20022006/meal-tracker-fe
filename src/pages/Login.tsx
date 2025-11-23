@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { LogIn, Mail, Lock } from 'lucide-react';
 
 interface LoginProps {
@@ -11,17 +11,19 @@ export default function Login({ onToggle }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  // const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
-    if (error) {
-      setError(error.message || 'Failed to sign in');
-    }
+    // const { error } = await signIn(email, password);
+    // if (error) {
+    //   setError(error.message || 'Failed to sign in');
+    // }
+    // Mock login
+    setError('');
     setLoading(false);
   };
 
