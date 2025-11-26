@@ -4,8 +4,27 @@ import Header from '../components/Header';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { UserProfile } from '../types';
 
+// Sample user data for demo
+const SAMPLE_PROFILE: UserProfile = {
+  id: 1,
+  userId: 1,
+  height: 175,
+  weight: 70,
+  age: 28,
+  gender: 'male',
+  bmi: 22.86,
+  bmiCategory: 'Normal',
+  dailyCalorieGoal: 2500,
+  updatedAt: new Date().toISOString()
+};
+
+const SAMPLE_USER_EMAIL = 'demo@example.com';
+const SAMPLE_USER_CREATED = '2024-01-15';
+
 export default function Profile() {
-  const { profile, loading, updateProfile, calculateBMI, getBMICategory } = useUserProfile(1);
+  const { profile: profileFromHook, loading, updateProfile } = useUserProfile(1);
+  // Use sample profile if hook profile is not available
+  const profile = profileFromHook || SAMPLE_PROFILE;
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -47,12 +66,6 @@ export default function Profile() {
 
     setSaving(false);
     setEditing(false);
-    // }
-    
-    // Mock save
-    await loadProfile();
-    setEditing(false);
-    setSaving(false);
   };
 
   const getBMICategoryColor = (category: string) => {
@@ -86,9 +99,9 @@ export default function Profile() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                  {user?.email}
+                  {SAMPLE_USER_EMAIL}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">Member since {new Date(user?.created_at || '').toLocaleDateString()}</p>
+                <p className="text-gray-600 dark:text-gray-400">Member since {new Date(SAMPLE_USER_CREATED).toLocaleDateString()}</p>
               </div>
             </div>
 

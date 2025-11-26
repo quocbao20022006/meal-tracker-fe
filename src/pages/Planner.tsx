@@ -5,7 +5,7 @@ import { useMealPlans } from '../hooks/useMealPlans';
 import { MealPlan } from '../types';
 
 export default function Planner() {
-  const { mealPlans, loading, getWeekMealPlans } = useMealPlans();
+  const { loading, getWeekMealPlans } = useMealPlans();
   const [currentWeek, setCurrentWeek] = useState(getWeekDates(new Date()));
   const [filteredMeals, setFilteredMeals] = useState<MealPlan[]>([]);
 
