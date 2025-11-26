@@ -1,1 +1,2 @@
-meal-tracker-fe
+npm i
+npm run dev
