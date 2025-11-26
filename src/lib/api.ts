@@ -112,13 +112,5 @@ class APIClient {
 
 export const api = new APIClient(API_BASE_URL);
 
-// Wrapper tương thích với Supabase để dễ migration
-export const supabase = {
-  auth: {
-    signUp: (params: { email: string; password: string }) => 
-      api.signUp(params.email, params.password),
-    signInWithPassword: (params: { email: string; password: string }) => 
-      api.signIn(params.email, params.password),
-    signOut: () => api.signOut(),
-  },
-};
+// Legacy wrapper - use services and hooks instead
+// All auth operations should be handled via useAuth hook with auth.service

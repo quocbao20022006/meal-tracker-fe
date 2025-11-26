@@ -1,83 +1,42 @@
 import { useEffect, useState } from 'react';
-// import { supabase } from '../lib/supabase';
-// import { useAuth } from '../contexts/AuthContext';
 import { Clock, Flame, TrendingUp, Plus } from 'lucide-react';
 import Header from '../components/Header';
-
-interface Meal {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  meal_type: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  prep_time: number;
-  cook_time: number;
-}
-
-interface MealPlan {
-  id: string;
-  meal_id: string;
-  meal_type: string;
-  servings: number;
-  completed: boolean;
-  meals: Meal;
-}
-
-interface UserProfile {
-  daily_calorie_goal: number;
-  bmi: number;
-  bmi_category: string;
-}
+import { useMealPlans } from '../hooks/useMealPlans';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { MealPlan } from '../types';
 
 export default function Dashboard() {
-  // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
+  const { mealPlans, loading: mealsLoading } = useMealPlans();
+  const { profile, loading: profileLoading } = useUserProfile(1); // Use dummy userId for now
   const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [mealPlans]);
 
   const loadDashboardData = async () => {
-    // if (!user) return;
-
-    // const today = new Date().toISOString().split('T')[0];
-
-    // const [mealsResult, profileResult] = await Promise.all([
-    //   supabase
-    //     .from('meal_plans')
-    //     .select('*, meals(*)')
-    //     .eq('user_id', user.id)
-    //     .eq('date', today),
-    //   supabase
-    //     .from('user_profiles')
-    //     .select('daily_calorie_goal, bmi, bmi_category')
-    //     .eq('id', user.id)
-    //     .maybeSingle()
-    // ]);
-
-    // if (mealsResult.data) setTodayMeals(mealsResult.data);
-    // if (profileResult.data) setProfile(profileResult.data);
-    setLoading(false);
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (mealPlans && mealPlans.length > 0) {
+      const filtered = mealPlans.filter(mp => mp.date === today);
+      setTodayMeals(filtered);
+    }
+    
+    setLoading(mealsLoading || profileLoading);
   };
 
   const totalCalories = todayMeals.reduce((sum, mp) => {
-    return sum + (mp.meals.calories * mp.servings);
+    return sum + ((mp.meal?.calories || 0) * mp.servings);
   }, 0);
 
-  const remainingCalories = profile ? profile.daily_calorie_goal - totalCalories : 0;
+  const remainingCalories = profile ? profile.dailyCalorieGoal - totalCalories : 0;
 
   const mealsByType = {
-    breakfast: todayMeals.filter(mp => mp.meal_type === 'breakfast'),
-    lunch: todayMeals.filter(mp => mp.meal_type === 'lunch'),
-    dinner: todayMeals.filter(mp => mp.meal_type === 'dinner'),
-    snack: todayMeals.filter(mp => mp.meal_type === 'snack')
+    breakfast: todayMeals.filter(mp => mp.mealType === 'breakfast'),
+    lunch: todayMeals.filter(mp => mp.mealType === 'lunch'),
+    dinner: todayMeals.filter(mp => mp.mealType === 'dinner'),
+    snack: todayMeals.filter(mp => mp.mealType === 'snack')
   };
 
   const getBMICategoryColor = (category: string) => {
@@ -141,8 +100,8 @@ export default function Dashboard() {
                       {profile?.bmi.toFixed(1)}
                     </p>
                     {profile && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${getBMICategoryColor(profile.bmi_category)}`}>
-                        {profile.bmi_category}
+                      <span className={`text-xs px-2 py-1 rounded-full ${getBMICategoryColor(profile.bmiCategory)}`}>
+                        {profile.bmiCategory}
                       </span>
                     )}
                   </div>
@@ -165,25 +124,25 @@ export default function Dashboard() {
                     <div className="space-y-3">
                       {mealsByType[type as keyof typeof mealsByType].map((mp) => (
                         <div key={mp.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                          {mp.meals.image_url && (
+                          {mp.meal?.imageUrl && (
                             <img
-                              src={mp.meals.image_url}
-                              alt={mp.meals.name}
+                              src={mp.meal.imageUrl}
+                              alt={mp.meal.name}
                               className="w-16 h-16 rounded-lg object-cover"
                             />
                           )}
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-800 dark:text-white">
-                              {mp.meals.name}
+                              {mp.meal?.name}
                             </h4>
                             <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                               <span className="flex items-center gap-1">
                                 <Flame className="w-3 h-3" />
-                                {Math.round(mp.meals.calories * mp.servings)} cal
+                                {Math.round((mp.meal?.calories || 0) * mp.servings)} cal
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {mp.meals.prep_time + mp.meals.cook_time} min
+                                {(mp.meal?.prepTime || 0) + (mp.meal?.cookTime || 0)} min
                               </span>
                             </div>
                           </div>

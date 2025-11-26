@@ -1,34 +1,8 @@
 import { useEffect, useState } from 'react';
-// import { supabase } from '../lib/supabase';
-// import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, Clock, Users, Flame, Plus } from 'lucide-react';
-
-interface Ingredient {
-  name: string;
-  quantity: string;
-}
-
-interface RecipeStep {
-  step: number;
-  instruction: string;
-}
-
-interface Meal {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  meal_type: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  prep_time: number;
-  cook_time: number;
-  servings: number;
-  ingredients: Ingredient[];
-  recipe_steps: RecipeStep[];
-}
+import { useMeals } from '../hooks/useMeals';
+import { useMealPlans } from '../hooks/useMealPlans';
+import { Meal } from '../types';
 
 interface MealDetailProps {
   mealId: string;
@@ -36,41 +10,36 @@ interface MealDetailProps {
 }
 
 export default function MealDetail({ mealId, onBack }: MealDetailProps) {
-  // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
+  const { meals, loading: mealsLoading } = useMeals();
+  const { createMealPlan } = useMealPlans();
   const [meal, setMeal] = useState<Meal | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(mealsLoading);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'recipe' | 'nutrition'>('ingredients');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     loadMeal();
-  }, [mealId]);
+  }, [mealId, meals]);
 
   const loadMeal = async () => {
-    // const { data } = await supabase
-    //   .from('meals')
-    //   .select('*')
-    //   .eq('id', mealId)
-    //   .maybeSingle();
-
-    // if (data) setMeal(data);
+    if (meals && meals.length > 0) {
+      const found = meals.find(m => m.id.toString() === mealId);
+      setMeal(found || null);
+    }
     setLoading(false);
   };
 
   const addToTodaysPlan = async () => {
-    if (!user || !meal) return;
+    if (!meal) return;
 
     setAdding(true);
     const today = new Date().toISOString().split('T')[0];
 
-    await supabase.from('meal_plans').insert({
-      user_id: user.id,
-      meal_id: meal.id,
+    await createMealPlan({
+      mealId: meal.id,
       date: today,
-      meal_type: meal.meal_type,
-      servings: 1,
-      completed: false
+      mealType: meal.mealType,
+      servings: 1
     });
 
     setAdding(false);
@@ -114,7 +83,7 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
           <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl">
             <div className="relative h-80">
               <img
-                src={meal.image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                src={meal.imageUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
                 alt={meal.name}
                 className="w-full h-full object-cover"
               />
@@ -134,12 +103,12 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <Clock className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.prep_time}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.prepTime}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Prep (min)</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <Clock className="w-6 h-6 mx-auto text-teal-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.cook_time}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.cookTime}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Cook (min)</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -167,34 +136,13 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
 
               {activeTab === 'ingredients' && (
                 <div className="space-y-3">
-                  {meal.ingredients.map((ingredient, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl"
-                    >
-                      <span className="text-gray-800 dark:text-white font-medium">
-                        {ingredient.name}
-                      </span>
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {ingredient.quantity}
-                      </span>
-                    </div>
-                  ))}
+                  <p className="text-gray-600 dark:text-gray-400">Ingredients coming soon</p>
                 </div>
               )}
 
               {activeTab === 'recipe' && (
                 <div className="space-y-4">
-                  {meal.recipe_steps.map((step) => (
-                    <div key={step.step} className="flex gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold">
-                        {step.step}
-                      </div>
-                      <p className="flex-1 text-gray-700 dark:text-gray-300 pt-1">
-                        {step.instruction}
-                      </p>
-                    </div>
-                  ))}
+                  <p className="text-gray-600 dark:text-gray-400">Recipe steps coming soon</p>
                 </div>
               )}
 

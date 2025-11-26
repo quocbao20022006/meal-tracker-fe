@@ -1,54 +1,27 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Flame, Clock, Plus, Eye } from 'lucide-react';
+import { Clock, Plus, Eye } from 'lucide-react';
 import Header from '../components/Header';
-
-interface Meal {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  meal_type: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  prep_time: number;
-  cook_time: number;
-}
+import { useMeals } from '../hooks/useMeals';
+import { Meal } from '../types';
 
 interface MealsProps {
   onViewMeal: (mealId: string) => void;
 }
 
 export default function Meals({ onViewMeal }: MealsProps) {
-  const [meals, setMeals] = useState<Meal[]>([]);
+  const { meals, loading } = useMeals();
   const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMeals();
-  }, []);
-
-  useEffect(() => {
-    filterMeals();
+    if (meals && meals.length > 0) {
+      filterMeals();
+    }
   }, [meals, searchQuery, selectedType]);
 
-  const loadMeals = async () => {
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('is_public', true)
-      .order('name');
-
-    if (data) setMeals(data);
-    setLoading(false);
-  };
-
   const filterMeals = () => {
-    let filtered = meals;
+    let filtered = meals || [];
 
     if (searchQuery) {
       filtered = filtered.filter(meal =>
@@ -58,7 +31,7 @@ export default function Meals({ onViewMeal }: MealsProps) {
     }
 
     if (selectedType !== 'all') {
-      filtered = filtered.filter(meal => meal.meal_type === selectedType);
+      filtered = filtered.filter(meal => meal.mealType === selectedType);
     }
 
     setFilteredMeals(filtered);
@@ -111,11 +84,11 @@ export default function Meals({ onViewMeal }: MealsProps) {
               <div
                 key={meal.id}
                 className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer"
-                onClick={() => onViewMeal(meal.id)}
+                onClick={() => onViewMeal(meal.id.toString())}
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={meal.image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                    src={meal.imageUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'}
                     alt={meal.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
@@ -127,7 +100,7 @@ export default function Meals({ onViewMeal }: MealsProps) {
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize">
-                      {meal.meal_type}
+                      {meal.mealType}
                     </span>
                   </div>
 
@@ -142,7 +115,7 @@ export default function Meals({ onViewMeal }: MealsProps) {
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {meal.prep_time + meal.cook_time} min
+                      {meal.prepTime + meal.cookTime} min
                     </span>
                     <div className="flex gap-2">
                       <span>P: {meal.protein}g</span>

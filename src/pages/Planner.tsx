@@ -1,34 +1,15 @@
 import { useEffect, useState } from 'react';
-// import { supabase } from '../lib/supabase';
-// import { useAuth } from '../contexts/AuthContext';
 import { ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import Header from '../components/Header';
-
-interface MealPlan {
-  id: string;
-  date: string;
-  meal_type: string;
-  servings: number;
-  completed: boolean;
-  meals: {
-    name: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-    image_url: string | null;
-  };
-}
+import { useMealPlans } from '../hooks/useMealPlans';
+import { MealPlan } from '../types';
 
 export default function Planner() {
-  // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
+  const { mealPlans, loading, getWeekMealPlans } = useMealPlans();
   const [currentWeek, setCurrentWeek] = useState(getWeekDates(new Date()));
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredMeals, setFilteredMeals] = useState<MealPlan[]>([]);
 
   useEffect(() => {
-    // if (user) loadWeekMeals();
     loadWeekMeals();
   }, [currentWeek]);
 
@@ -47,20 +28,11 @@ export default function Planner() {
   }
 
   const loadWeekMeals = async () => {
-    // if (!user) return;
-
-    // const startDate = currentWeek[0].toISOString().split('T')[0];
-    // const endDate = currentWeek[6].toISOString().split('T')[0];
-
-    // const { data } = await supabase
-    //   .from('meal_plans')
-    //   .select('*, meals(name, calories, protein, carbs, fats, image_url)')
-    //   .eq('user_id', user.id)
-    //   .gte('date', startDate)
-    //   .lte('date', endDate);
-
-    // if (data) setMealPlans(data);
-    setLoading(false);
+    const startDate = currentWeek[0].toISOString().split('T')[0];
+    const result = await getWeekMealPlans(startDate);
+    if (result.data) {
+      setFilteredMeals(result.data);
+    }
   };
 
   const previousWeek = () => {
@@ -77,25 +49,25 @@ export default function Planner() {
 
   const getMealsForDay = (date: Date, mealType: string) => {
     const dateStr = date.toISOString().split('T')[0];
-    return mealPlans.filter(
-      mp => mp.date === dateStr && mp.meal_type === mealType
+    return filteredMeals.filter(
+      mp => mp.date === dateStr && mp.mealType === mealType
     );
   };
 
   const getDayCalories = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    const dayMeals = mealPlans.filter(mp => mp.date === dateStr);
-    return dayMeals.reduce((sum, mp) => sum + (mp.meals.calories * mp.servings), 0);
+    const dayMeals = filteredMeals.filter(mp => mp.date === dateStr);
+    return dayMeals.reduce((sum, mp) => sum + ((mp.meal?.calories || 0) * mp.servings), 0);
   };
 
   const getDayMacros = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    const dayMeals = mealPlans.filter(mp => mp.date === dateStr);
+    const dayMeals = filteredMeals.filter(mp => mp.date === dateStr);
     return dayMeals.reduce(
       (acc, mp) => ({
-        protein: acc.protein + mp.meals.protein * mp.servings,
-        carbs: acc.carbs + mp.meals.carbs * mp.servings,
-        fats: acc.fats + mp.meals.fats * mp.servings,
+        protein: acc.protein + ((mp.meal?.protein || 0) * mp.servings),
+        carbs: acc.carbs + ((mp.meal?.carbs || 0) * mp.servings),
+        fats: acc.fats + ((mp.meal?.fats || 0) * mp.servings),
       }),
       { protein: 0, carbs: 0, fats: 0 }
     );
@@ -197,7 +169,7 @@ export default function Planner() {
                                   key={mp.id}
                                   className="text-xs text-gray-700 dark:text-gray-300 truncate"
                                 >
-                                  {mp.meals.name}
+                                  {mp.meal?.name}
                                 </div>
                               ))}
                             </div>

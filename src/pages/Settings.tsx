@@ -123,7 +123,7 @@ export default function Settings() {
               </div>
               <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
                 <span>Made with</span>
-                <span className="font-medium text-gray-800 dark:text-white">React + Supabase</span>
+                <span className="font-medium text-gray-800 dark:text-white">React + Spring Boot</span>
               </div>
             </div>
           </div>

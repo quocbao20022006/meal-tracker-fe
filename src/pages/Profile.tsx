@@ -1,25 +1,12 @@
 import { useEffect, useState } from 'react';
-// import { supabase } from '../lib/supabase';
-// import { useAuth } from '../contexts/AuthContext';
 import { User, Scale, TrendingUp, Target, Save } from 'lucide-react';
 import Header from '../components/Header';
-
-interface UserProfile {
-  height: number;
-  weight: number;
-  age: number;
-  gender: string;
-  bmi: number;
-  bmi_category: string;
-  daily_calorie_goal: number;
-}
+import { useUserProfile } from '../hooks/useUserProfile';
+import { UserProfile } from '../types';
 
 export default function Profile() {
-  // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { profile, loading, updateProfile, calculateBMI, getBMICategory } = useUserProfile(1);
   const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -27,77 +14,39 @@ export default function Profile() {
     weight: '',
     age: '',
     gender: 'male' as 'male' | 'female' | 'other',
-    daily_calorie_goal: ''
+    dailyCalorieGoal: ''
   });
 
   useEffect(() => {
-    // if (user) loadProfile();
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    // if (!user) return;
-
-    // const { data } = await supabase
-    //   .from('user_profiles')
-    //   .select('*')
-    //   .eq('id', user.id)
-    //   .maybeSingle();
-
-    // if (data) {
-    //   setProfile(data);
-    //   setFormData({
-    //     height: data.height.toString(),
-    //     weight: data.weight.toString(),
-    //     age: data.age.toString(),
-    //     gender: data.gender,
-    //     daily_calorie_goal: data.daily_calorie_goal.toString()
-    //   });
-    // }
-    setLoading(false);
-  };
-
-  const calculateBMI = (weight: number, height: number) => {
-    const heightInMeters = height / 100;
-    return weight / (heightInMeters * heightInMeters);
-  };
-
-  const getBMICategory = (bmi: number): 'Underweight' | 'Normal' | 'Overweight' | 'Obese' => {
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Overweight';
-    return 'Obese';
-  };
+    if (profile) {
+      setFormData({
+        height: profile.height.toString(),
+        weight: profile.weight.toString(),
+        age: profile.age.toString(),
+        gender: profile.gender,
+        dailyCalorieGoal: profile.dailyCalorieGoal.toString()
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
-    // if (!user) return;
-
     setSaving(true);
     const weight = parseFloat(formData.weight);
     const height = parseFloat(formData.height);
     const age = parseInt(formData.age);
-    const dailyCalorieGoal = parseInt(formData.daily_calorie_goal);
+    const dailyCalorieGoal = parseInt(formData.dailyCalorieGoal);
 
-    const bmi = calculateBMI(weight, height);
-    const bmiCategory = getBMICategory(bmi);
+    // Use the update hook
+    await updateProfile({
+      height,
+      weight,
+      age,
+      gender: formData.gender,
+      dailyCalorieGoal
+    });
 
-    // const { error } = await supabase
-    //   .from('user_profiles')
-    //   .update({
-    //     height,
-    //     weight,
-    //     age,
-    //     gender: formData.gender,
-    //     bmi: parseFloat(bmi.toFixed(2)),
-    //     bmi_category: bmiCategory,
-    //     daily_calorie_goal: dailyCalorieGoal,
-    //     updated_at: new Date().toISOString()
-    //   })
-    //   .eq('id', user.id);
-
-    // if (!error) {
-    //   await loadProfile();
-    //   setEditing(false);
+    setSaving(false);
+    setEditing(false);
     // }
     
     // Mock save
@@ -162,7 +111,7 @@ export default function Profile() {
                           weight: profile.weight.toString(),
                           age: profile.age.toString(),
                           gender: profile.gender as 'male' | 'female' | 'other',
-                          daily_calorie_goal: profile.daily_calorie_goal.toString()
+                          dailyCalorieGoal: profile.dailyCalorieGoal.toString()
                         });
                       }
                     }}
@@ -233,8 +182,8 @@ export default function Profile() {
                     <p className="text-2xl font-bold text-gray-800 dark:text-white">
                       {profile.bmi.toFixed(1)}
                     </p>
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getBMICategoryColor(profile.bmi_category)}`}>
-                      {profile.bmi_category}
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getBMICategoryColor(profile.bmiCategory)}`}>
+                      {profile.bmiCategory}
                     </span>
                   </div>
                 </div>
@@ -245,7 +194,7 @@ export default function Profile() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Daily Goal</span>
                   </div>
                   <p className="text-2xl font-bold text-gray-800 dark:text-white">
-                    {profile.daily_calorie_goal} cal
+                    {profile.dailyCalorieGoal} cal
                   </p>
                 </div>
               </div>
@@ -308,8 +257,8 @@ export default function Profile() {
                   </label>
                   <input
                     type="number"
-                    value={formData.daily_calorie_goal}
-                    onChange={(e) => setFormData({ ...formData, daily_calorie_goal: e.target.value })}
+                    value={formData.dailyCalorieGoal}
+                    onChange={(e) => setFormData({ ...formData, dailyCalorieGoal: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
                   />
                 </div>
