@@ -1,61 +1,71 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import * as authService from '../services/auth.service';
+
+export interface User {
+  id: number;
+  email: string;
+}
 
 interface AuthContextType {
-  loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  user: User | null;
+  hasProfile: boolean;
+  authLoading: boolean;
+  logout: () => void;
+  refreshAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const signUp = async (_email: string, _password: string) => {
-    try {
-      setLoading(true);
-      // Auth operations would be handled via useAuth hook with auth.service
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    } finally {
-      setLoading(false);
+  const loadAuthState = () => {
+    const token = authService.getToken();
+    if (token) {
+      // Parse user from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        const hasUserProfile = localStorage.getItem('hasProfile') === 'true';
+        setHasProfile(hasUserProfile);
+      }
+    } else {
+      setUser(null);
+      setHasProfile(false);
     }
+    setAuthLoading(false);
   };
 
-  const signIn = async (_email: string, _password: string) => {
-    try {
-      setLoading(true);
-      // Auth operations would be handled via useAuth hook with auth.service
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    loadAuthState();
+  }, []);
+
+  const logout = () => {
+    authService.logout();
+    localStorage.removeItem('user');
+    localStorage.removeItem('hasProfile');
+    setUser(null);
+    setHasProfile(false);
   };
 
-  const signOut = async () => {
-    setLoading(true);
-    try {
-      // Auth operations would be handled via useAuth hook with auth.service
-    } finally {
-      setLoading(false);
-    }
+  const refreshAuth = () => {
+    loadAuthState();
   };
 
   return (
-    <AuthContext.Provider value={{ loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, hasProfile, authLoading, logout, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuthContext() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuthContext must be used within an AuthProvider');
   }
   return context;
 }

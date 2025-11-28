@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Flame, Plus } from 'lucide-react';
 import { useMeals } from '../hooks/useMeals';
 import { useMealPlans } from '../hooks/useMealPlans';
 import { Meal } from '../types';
 
-interface MealDetailProps {
-  mealId: string;
-  onBack: () => void;
-}
-
-export default function MealDetail({ mealId, onBack }: MealDetailProps) {
+export default function MealDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { meals, loading: mealsLoading } = useMeals();
   const { createMealPlan } = useMealPlans();
   const [meal, setMeal] = useState<Meal | null>(null);
@@ -19,11 +17,11 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
 
   useEffect(() => {
     loadMeal();
-  }, [mealId, meals]);
+  }, [id, meals]);
 
   const loadMeal = async () => {
     if (meals && meals.length > 0) {
-      const found = meals.find(m => m.id.toString() === mealId);
+      const found = meals.find(m => m.id.toString() === id);
       setMeal(found || null);
     }
     setLoading(false);
@@ -70,7 +68,7 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <button
-          onClick={onBack}
+          onClick={() => navigate('/meals')}
           className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
         >
           <ArrowLeft className="w-5 h-5" />

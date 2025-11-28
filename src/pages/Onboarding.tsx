@@ -1,11 +1,13 @@
 import { useState } from 'react';
-// import { useAuth } from '../contexts/AuthContext';
-// import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../contexts/AuthContext';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { User, Scale, Calendar, Users } from 'lucide-react';
 
 export default function Onboarding() {
-  // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
+  const { user, refreshAuth } = useAuthContext();
+  const { createProfile, createProfileLoading } = useUserProfile(user?.id || 0);
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,20 +16,9 @@ export default function Onboarding() {
     height: '',
     weight: '',
     age: '',
-    gender: 'male' as 'male' | 'female' | 'other'
+    gender: 'male' as 'male' | 'female' | 'other',
+    dailyCalorieGoal: ''
   });
-
-  const calculateBMI = (weight: number, height: number) => {
-    const heightInMeters = height / 100;
-    return weight / (heightInMeters * heightInMeters);
-  };
-
-  const getBMICategory = (bmi: number): 'Underweight' | 'Normal' | 'Overweight' | 'Obese' => {
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Overweight';
-    return 'Obese';
-  };
 
   const calculateDailyCalories = (weight: number, height: number, age: number, gender: string) => {
     let bmr: number;
@@ -54,27 +45,24 @@ export default function Onboarding() {
         return;
       }
 
-      const bmi = calculateBMI(weight, height);
-      const bmiCategory = getBMICategory(bmi);
       const dailyCalories = calculateDailyCalories(weight, height, age, formData.gender);
 
-      // const { error: insertError } = await supabase
-      //   .from('user_profiles')
-      //   .insert({
-      //     id: user!.id,
-      //     height,
-      //     weight,
-      //     age,
-      //     gender: formData.gender,
-      //     bmi: parseFloat(bmi.toFixed(2)),
-      //     bmi_category: bmiCategory,
-      //     daily_calorie_goal: dailyCalories
-      //   });
+      await createProfile({
+        height,
+        weight,
+        age,
+        gender: formData.gender,
+        dailyCalorieGoal: dailyCalories
+      });
 
-      // if (insertError) throw insertError;
-      // Mock insert
-      console.log('Mock profile saved:', { user, height, weight, age, gender: formData.gender, bmi: parseFloat(bmi.toFixed(2)), bmi_category: bmiCategory, daily_calorie_goal: dailyCalories });
-
+      // Mark profile as created
+      localStorage.setItem('hasProfile', 'true');
+      refreshAuth();
+      
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
       setLoading(false);
@@ -234,10 +222,10 @@ export default function Onboarding() {
             )}
             <button
               onClick={handleNext}
-              disabled={loading}
+              disabled={loading || createProfileLoading}
               className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading ? 'Saving...' : step === 4 ? 'Complete' : 'Next'}
+              {loading || createProfileLoading ? 'Saving...' : step === 4 ? 'Complete' : 'Next'}
             </button>
           </div>
         </div>

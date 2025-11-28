@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, Plus, Eye } from 'lucide-react';
 import Header from '../components/Header';
 import { useMeals } from '../hooks/useMeals';
 import { Meal } from '../types';
 
-interface MealsProps {
-  onViewMeal: (mealId: string) => void;
-}
-
-export default function Meals({ onViewMeal }: MealsProps) {
+export default function Meals() {
   const { meals, loading } = useMeals();
+  const navigate = useNavigate();
   const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -84,7 +82,7 @@ export default function Meals({ onViewMeal }: MealsProps) {
               <div
                 key={meal.id}
                 className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer"
-                onClick={() => onViewMeal(meal.id.toString())}
+                onClick={() => navigate(`/meals/${meal.id}`)}
               >
                 <div className="relative h-48 overflow-hidden">
                   <img

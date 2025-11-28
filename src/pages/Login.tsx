@@ -1,30 +1,41 @@
 import { useState } from 'react';
-// import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { LogIn, Mail, Lock } from 'lucide-react';
 
-interface LoginProps {
-  onToggle: () => void;
-}
-
-export default function Login({ onToggle }: LoginProps) {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  // const { signIn } = useAuth();
+  const { login, loginLoading, loginError } = useAuth();
+  const { refreshAuth } = useAuthContext();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
-    // const { error } = await signIn(email, password);
-    // if (error) {
-    //   setError(error.message || 'Failed to sign in');
-    // }
-    // Mock login
-    setError('');
-    setLoading(false);
+    if (!email || !password) {
+      setError('Please enter email and password');
+      return;
+    }
+
+    try {
+      const result = await login({ email, password });
+      console.log('result', result);
+      if (result?.error) {
+        setError(result.error.message || 'Failed to sign in');
+      } else {
+        // Refresh auth state and navigate
+        refreshAuth();
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
+      }
+    } catch (err) {
+      setError(loginError?.message || 'Failed to sign in');
+    }
   };
 
   return (
@@ -87,17 +98,17 @@ export default function Login({ onToggle }: LoginProps) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loginLoading}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loginLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
             <button
-              onClick={onToggle}
+              onClick={() => navigate('/register')}
               className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
             >
               Sign up

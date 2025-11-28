@@ -1,18 +1,19 @@
 import { useState } from 'react';
-// import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, Mail, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
+import { UserPlus, Mail, Lock, User } from 'lucide-react';
 
-interface RegisterProps {
-  onToggle: () => void;
-}
-
-export default function Register({ onToggle }: RegisterProps) {
+export default function Register() {
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  // const { signUp } = useAuth();
+  const { signup, signupLoading, signupError } = useAuth();
+  const { refreshAuth } = useAuthContext();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +29,25 @@ export default function Register({ onToggle }: RegisterProps) {
       return;
     }
 
-    setLoading(true);
-    // const { error } = await signUp(email, password);
-    // if (error) {
-    //   setError(error.message || 'Failed to create account');
-    // }
-    // Mock registration
-    setError('');
-    setLoading(false);
+    if (!fullName || !username || !email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    try {
+      const result = await signup({ fullName, username, email, password });
+      if (result?.error) {
+        setError(result.error.message || 'Failed to create account');
+      } else {
+        // Account created, refresh auth and redirect to onboarding
+        refreshAuth();
+        setTimeout(() => {
+          navigate('/onboarding');
+        }, 100);
+      }
+    } catch (err) {
+      setError(signupError?.message || 'Failed to create account');
+    }
   };
 
   return (
@@ -61,6 +73,40 @@ export default function Register({ onToggle }: RegisterProps) {
                 {error}
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                  placeholder="johndoe"
+                  required
+                />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -115,17 +161,17 @@ export default function Register({ onToggle }: RegisterProps) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={signupLoading}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {signupLoading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
           <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <button
-              onClick={onToggle}
+              onClick={() => navigate('/login')}
               className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
             >
               Sign in

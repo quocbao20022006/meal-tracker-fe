@@ -1,29 +1,30 @@
 import { Home, Utensils, History, BookOpen, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
-// import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
-interface SidebarProps {
-  activePage: string;
-  onNavigate: (page: string) => void;
-}
-
-export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
-  // const { signOut } = useAuth();
+export default function Sidebar() {
+  const { logout } = useAuthContext();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = async () => {
-    // await signOut();
-    // Mock logout
-    console.log('Mock logout');
+  const handleLogout = () => {
+    logout();
+    window.location.reload();
+  };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'meals', label: 'Meals', icon: Utensils },
-    { id: 'history', label: 'History', icon: History },
-    { id: 'planner', label: 'Planner', icon: BookOpen },
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
+    { id: 'meals', label: 'Meals', icon: Utensils, path: '/meals' },
+    { id: 'history', label: 'History', icon: History, path: '/history' },
+    { id: 'planner', label: 'Planner', icon: BookOpen, path: '/planner' },
+    { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   return (
@@ -42,11 +43,11 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
       <nav className="flex-1 px-3">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activePage === item.id;
+          const isActive = location.pathname === item.path;
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => handleNavigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
                 isActive
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'

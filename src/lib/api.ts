@@ -1,5 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 
+//fetch
+
+///dang nhap thanh cong => luu token vao localstorage
+
+// localStorage.setItem('auth_token', newToken);
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 class APIClient {
@@ -51,6 +57,7 @@ class APIClient {
   async signUp(email: string, password: string) {
     try {
       const { data } = await this.client.post('/auth/signup', { email, password });
+
       if (data.token) this.setToken(data.token);
       return { data, error: null };
     } catch (error: any) {

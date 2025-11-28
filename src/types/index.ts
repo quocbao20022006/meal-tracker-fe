@@ -1,8 +1,9 @@
 // Types cho các request/response từ API
 export interface AuthResponse {
-  token: string;
-  userId: number;
-  email: string;
+  access_token: string;
+  user_id: number;
+  status: string;
+  message: string;
 }
 
 export interface LoginRequest {
@@ -11,6 +12,8 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
+  fullName: string;
+  username: string;
   email: string;
   password: string;
 }

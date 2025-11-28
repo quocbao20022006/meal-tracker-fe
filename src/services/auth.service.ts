@@ -7,22 +7,22 @@ import {
 
 export const login = async (request: LoginRequest) => {
   const { data, error } = await httpClient.post<AuthResponse>(
-    '/auth/login',
+    '/v1/auth/login',
     request
   );
-  if (data?.token) {
-    httpClient.setToken(data.token);
+  if (data?.access_token) {
+    httpClient.setToken(data.access_token);
   }
   return { data, error };
 };
 
-export const signup = async (request: SignupRequest) => {
+export const register = async (request: SignupRequest) => {
   const { data, error } = await httpClient.post<AuthResponse>(
-    '/auth/signup',
+    '/v1/auth/register',
     request
   );
-  if (data?.token) {
-    httpClient.setToken(data.token);
+  if (data?.access_token) {
+    httpClient.setToken(data.access_token);
   }
   return { data, error };
 };

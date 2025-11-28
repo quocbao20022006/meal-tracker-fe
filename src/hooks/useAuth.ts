@@ -8,15 +8,31 @@ import { AuthResponse, LoginRequest, SignupRequest } from '../types';
  */
 export function useAuth() {
   const loginMutation = useMutation<AuthResponse>(async (credentials: LoginRequest) => {
-    return authService.login(credentials);
+    const result = await authService.login(credentials);
+    if (result.data) {
+      // Save user info to localStorage
+      localStorage.setItem('user', JSON.stringify({
+        id: result.data.user_id,
+      }));
+    }
+    return result;
   });
 
   const signupMutation = useMutation<AuthResponse>(async (credentials: SignupRequest) => {
-    return authService.signup(credentials);
+    const result = await authService.register(credentials);
+    if (result.data) {
+      // Save user info to localStorage
+      localStorage.setItem('user', JSON.stringify({
+        id: result.data.user_id,
+      }));
+    }
+    return result;
   });
 
   const logout = useCallback(() => {
     authService.logout();
+    localStorage.removeItem('user');
+    localStorage.removeItem('hasProfile');
   }, []);
 
   const isAuthenticated = useCallback(() => {
