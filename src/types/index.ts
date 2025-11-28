@@ -83,8 +83,9 @@ export interface MealPlan {
   mealType: string;
   servings: number;
   completed: boolean;
-  meal?: Meal;
+  meal?: MealResponse;
 }
+
 
 export interface CreateMealPlanRequest {
   mealId: number;

@@ -5,7 +5,7 @@ import { useMealPlans } from "../hooks/useMealPlans";
 import { MealResponse } from "../types"; // make sure Meal matches the API fields
 
 export default function MealDetail() {
-  const { mealId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { createMealPlan } = useMealPlans();
 
@@ -17,7 +17,7 @@ export default function MealDetail() {
   useEffect(() => {
     const fetchMealDetail = async () => {
       try {
-        const res = await fetch(`/api/meal/${mealId}`);
+        const res = await fetch(`/api/meal/${id}`);
         if (!res.ok) throw new Error("Meal not found");
 
         const data: MealResponse = await res.json();
@@ -30,25 +30,25 @@ export default function MealDetail() {
     };
 
     fetchMealDetail();
-  }, [mealId]);
+  }, [id]);
 
   // Checklist ingredients
   const [checkedList, setCheckedList] = useState<boolean[]>([]);
   // Load checklist from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(`meal-checklist-${mealId}`);
+    const saved = localStorage.getItem(`meal-checklist-${id}`);
     if (saved) {
       setCheckedList(JSON.parse(saved));
     } else if (meal?.meal_ingredients) {
       setCheckedList(new Array(meal.meal_ingredients.length).fill(false));
     }
-  }, [mealId, meal]);
+  }, [id, meal]);
   // Save checklist to localStorage when change
   useEffect(() => {
     if (checkedList.length > 0) {
-      localStorage.setItem(`meal-checklist-${mealId}`, JSON.stringify(checkedList));
+      localStorage.setItem(`meal-checklist-${id}`, JSON.stringify(checkedList));
     }
-  }, [checkedList, mealId]);
+  }, [checkedList, id]);
 
   const toggleCheck = (index: number) => {
     setCheckedList(prev => {
@@ -107,7 +107,7 @@ export default function MealDetail() {
           {/* Meal info */}
           <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
             <div className="w-1/3">
-              <img src={meal.image_url} alt="" className="w-full h-full rounded-2xl object-cover" />
+              <img src={meal.image_url ?? ""} alt="" className="w-full h-full rounded-2xl object-cover" />
             </div>
             <div className="w-2/3 flex flex-col justify-between">
               <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">{meal.meal_name}</h1>
@@ -241,7 +241,7 @@ export default function MealDetail() {
             {/* Image */}
             <div className="relative h-80">
               <img
-                src={meal.image_url}
+                src={meal.image_url ?? ""}
                 alt={meal.meal_name}
                 className="w-full h-full object-cover"
               />
@@ -288,24 +288,6 @@ export default function MealDetail() {
                       <p className="text-gray-800 dark:text-gray-200">{s.instruction}</p>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {/* Nutrition Tab */}
-              {activeTab === "nutrition" && (
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center bg-red-100 p-5 rounded-xl">
-                    <p className="text-3xl font-bold">{proteinPercent.toFixed(0)}%</p>
-                    <p>Protein ({meal.nutrition ?? 0}g)</p>
-                  </div>
-                  <div className="text-center bg-blue-100 p-5 rounded-xl">
-                    <p className="text-3xl font-bold">{carbsPercent.toFixed(0)}%</p>
-                    <p>Carbs ({meal.nutrition ?? 0}g)</p>
-                  </div>
-                  <div className="text-center bg-yellow-100 p-5 rounded-xl">
-                    <p className="text-3xl font-bold">{fatsPercent.toFixed(0)}%</p>
-                    <p>Fats ({meal.nutrition ?? 0}g)</p>
-                  </div>
                 </div>
               )}
 

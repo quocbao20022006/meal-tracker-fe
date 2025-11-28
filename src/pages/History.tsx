@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // import { supabase } from '../lib/supabase';
 // import { useAuth } from '../contexts/AuthContext';
-import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 import Header from '../components/Header';
 
 interface DailyStats {
@@ -15,8 +15,8 @@ interface DailyStats {
 
 export default function History() {
   // const { user } = useAuth();
-  const user = { id: 'demo-user' } as any; // Mock user for demo
   const [period, setPeriod] = useState<'week' | 'month'>('week');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [loading, setLoading] = useState(true);
 

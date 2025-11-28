@@ -124,16 +124,16 @@ export default function Dashboard() {
                     <div className="space-y-3">
                       {mealsByType[type as keyof typeof mealsByType].map((mp) => (
                         <div key={mp.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                          {mp.meal?.imageUrl && (
+                          {mp.meal?.image_url && (
                             <img
-                              src={mp.meal.imageUrl}
-                              alt={mp.meal.name}
+                              src={mp.meal.image_url ?? ""}
+                              alt={mp.meal.meal_name ?? ""}
                               className="w-16 h-16 rounded-lg object-cover"
                             />
                           )}
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-800 dark:text-white">
-                              {mp.meal?.name}
+                              {mp.meal?.meal_name}
                             </h4>
                             <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                               <span className="flex items-center gap-1">
@@ -142,7 +142,7 @@ export default function Dashboard() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {(mp.meal?.prepTime || 0) + (mp.meal?.cookTime || 0)} min
+                                {(mp.meal?.cooking_time || 0)} min
                               </span>
                             </div>
                           </div>

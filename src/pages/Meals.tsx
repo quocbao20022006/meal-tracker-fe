@@ -6,11 +6,7 @@ import Pagination from '../components/Pagination';
 import { MealResponse, PaginatedMeals } from '../types';
 import { useNavigate } from 'react-router-dom';
 
-interface MealsProps {
-  onViewMeal: (mealId: string) => void;
-}
-
-export default function Meals({ onViewMeal }: MealsProps) {
+export default function Meals() {
   const [meals, setMeals] = useState<MealResponse[]>([]);
   const [filteredMeals, setFilteredMeals] = useState<MealResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +14,6 @@ export default function Meals({ onViewMeal }: MealsProps) {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
-
   const navigate = useNavigate();
 
   // Fetch meals from API
@@ -156,7 +151,7 @@ export default function Meals({ onViewMeal }: MealsProps) {
             
             {/* Meal cards */}
             {filteredMeals.map((meal) => (
-              <MealCard key={meal.id} meal={meal} onViewMeal={onViewMeal} />
+              <MealCard key={meal.id} meal={meal} onViewMeal={(id) => navigate(`/meals/${id}`)} />
             ))}
           </div>
 
