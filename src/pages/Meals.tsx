@@ -5,6 +5,7 @@ import MealCard from '../components/MealCard';
 import Pagination from '../components/Pagination';
 import { MealResponse, PaginatedMeals } from '../types';
 import { useNavigate } from 'react-router-dom';
+import * as httpClient from '../lib/http-client';
 
 export default function Meals() {
   const [meals, setMeals] = useState<MealResponse[]>([]);
@@ -22,15 +23,18 @@ export default function Meals() {
     try {
       const endpoint =
         category === 'all'
-          ? `/api/meal/all?page=${page}` // fallback if backend doesn't support filter=all
-          : `/api/meal/filter?category=${category}&page=${page}`;
+          ? `/meal/all?page=${page}`
+          : `/meal/filter?category=${category}&page=${page}`;
 
-      const res = await fetch(endpoint);
-      if (!res.ok) throw new Error('Failed to fetch meals');
+      const { data, error } = await httpClient.get<PaginatedMeals>(endpoint);
+      
+      if (error) {
+        console.error('Failed to fetch meals:', error);
+        return;
+      }
 
-      const data: PaginatedMeals = await res.json();
-      setMeals(Array.isArray(data.content) ? data.content : []);
-      setTotalPages(data.totalPages);
+      setMeals(Array.isArray(data?.content) ? data.content : []);
+      setTotalPages(data?.totalPages || 0);
     } catch (err) {
       console.error(err);
     } finally {

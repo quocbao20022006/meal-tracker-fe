@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Salad, Plus, Clock, User, BatteryCharging } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMealPlans } from "../hooks/useMealPlans";
-import { MealResponse } from "../types"; // make sure Meal matches the API fields
+import { MealResponse } from "../types";
+import * as httpClient from "../lib/http-client";
 
 export default function MealDetail() {
   const { id } = useParams();
@@ -17,10 +18,14 @@ export default function MealDetail() {
   useEffect(() => {
     const fetchMealDetail = async () => {
       try {
-        const res = await fetch(`/api/meal/${id}`);
-        if (!res.ok) throw new Error("Meal not found");
+        const mealId = Number(id);
+        const { data, error } = await httpClient.get<MealResponse>(`/api/meal/${mealId}`);
+        
+        if (error) {
+          console.error("Meal not found:", error);
+          return;
+        }
 
-        const data: MealResponse = await res.json();
         setMeal(data);
       } catch (err) {
         console.error(err);

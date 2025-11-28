@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 let axiosInstance: AxiosInstance | null = null;
 let token: string | null = localStorage.getItem('auth_token');
+console.log('Loaded token from localStorage:', token);
 
 const createAxiosInstance = () => {
   const instance = axios.create({
