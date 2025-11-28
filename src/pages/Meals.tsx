@@ -1,46 +1,102 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Clock, Plus, Eye } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Header from '../components/Header';
-import { useMeals } from '../hooks/useMeals';
-import { Meal } from '../types';
+import MealCard from '../components/MealCard';
+import Pagination from '../components/Pagination';
+import { MealResponse, PaginatedMeals } from '../types';
+import { useNavigate } from 'react-router-dom';
 
-export default function Meals() {
-  const { meals, loading } = useMeals();
-  const navigate = useNavigate();
-  const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
+interface MealsProps {
+  onViewMeal: (mealId: string) => void;
+}
+
+export default function Meals({ onViewMeal }: MealsProps) {
+  const [meals, setMeals] = useState<MealResponse[]>([]);
+  const [filteredMeals, setFilteredMeals] = useState<MealResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
-  useEffect(() => {
-    if (meals && meals.length > 0) {
-      filterMeals();
+  const navigate = useNavigate();
+
+  // Fetch meals from API
+  const fetchMeals = async (category: string, page: number) => {
+    setLoading(true);
+    try {
+      const endpoint =
+        category === 'all'
+          ? `/api/meal/all?page=${page}` // fallback if backend doesn't support filter=all
+          : `/api/meal/filter?category=${category}&page=${page}`;
+
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error('Failed to fetch meals');
+
+      const data: PaginatedMeals = await res.json();
+      setMeals(Array.isArray(data.content) ? data.content : []);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }, [meals, searchQuery, selectedType]);
+  };
 
-  const filterMeals = () => {
-    let filtered = meals || [];
+  // Reload meals when category or page changes
+  useEffect(() => {
+    fetchMeals(selectedType, currentPage);
+  }, [selectedType, currentPage]);
+
+  // Search filter (local UI only, does not call API)
+  // const searchFilteredMeals = meals.filter(
+  //   (m) =>
+  //     m.meal_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     m.meal_description?.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    if (page >= 0 && page < totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Get meals
+  // useEffect(() => {
+  //   fetchMeals(currentPage);
+  // }, [currentPage]);
+
+  // Filter meals by category
+  useEffect(() => {
+    let filtered = meals;
 
     if (searchQuery) {
-      filtered = filtered.filter(meal =>
-        meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        meal.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (m) =>
+          m.meal_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.meal_description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     if (selectedType !== 'all') {
-      filtered = filtered.filter(meal => meal.mealType === selectedType);
+      filtered = filtered.filter((m) =>
+        m.category_name.includes(selectedType)
+      );
     }
 
     setFilteredMeals(filtered);
-  };
+  }, [meals, searchQuery, selectedType]);
 
   const mealTypes = [
     { id: 'all', label: 'All Meals' },
-    { id: 'breakfast', label: 'Breakfast' },
-    { id: 'lunch', label: 'Lunch' },
-    { id: 'dinner', label: 'Dinner' },
+    { id: 'appetizer', label: 'Appetizers' },
+    { id: 'mainCourse', label: 'Main courses' },
     { id: 'snack', label: 'Snacks' },
+    { id: 'dessert', label: 'Desserts' },
+    { id: 'salad', label: 'Salads' },
+    { id: 'soup', label: 'Soups' },
+    { id: 'beverage', label: 'Beverage' },
   ];
 
   if (loading) {
@@ -61,11 +117,15 @@ export default function Meals() {
 
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-7xl mx-auto">
+          {/* Meal Type Filters */}
           <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
             {mealTypes.map((type) => (
               <button
                 key={type.id}
-                onClick={() => setSelectedType(type.id)}
+                onClick={() => {
+                  setSelectedType(type.id);
+                  setCurrentPage(0); // reset page on category change
+                }}
                 className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all ${
                   selectedType === type.id
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
@@ -77,68 +137,35 @@ export default function Meals() {
             ))}
           </div>
 
+          {/* Meals Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredMeals.map((meal) => (
-              <div
-                key={meal.id}
-                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer"
-                onClick={() => navigate(`/meals/${meal.id}`)}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={meal.imageUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                    alt={meal.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 right-3 bg-white dark:bg-gray-800 px-3 py-1 rounded-full text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    {meal.calories} cal
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize">
-                      {meal.mealType}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 line-clamp-1">
-                    {meal.name}
-                  </h3>
-
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                    {meal.description || 'Delicious and nutritious meal'}
-                  </p>
-
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {meal.prepTime + meal.cookTime} min
-                    </span>
-                    <div className="flex gap-2">
-                      <span>P: {meal.protein}g</span>
-                      <span>C: {meal.carbs}g</span>
-                      <span>F: {meal.fats}g</span>
-                    </div>
-                  </div>
-
-                  <button className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
-                    <Eye className="w-4 h-4" />
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center min-h-[380px] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-500 group">
+            {/* Add Meal Card */}
+            <div
+              className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center min-h-[380px] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-500 group"
+              onClick={() => navigate('/add-meal')}
+            >
               <div className="text-center p-6">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-all">
                   <Plus className="w-8 h-8 text-gray-400 group-hover:text-emerald-500" />
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 font-medium">Add Custom Meal</p>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">
+                  Add Custom Meal
+                </p>
               </div>
             </div>
+            
+            {/* Meal cards */}
+            {filteredMeals.map((meal) => (
+              <MealCard key={meal.id} meal={meal} onViewMeal={onViewMeal} />
+            ))}
           </div>
+
+          {/* Pagination Controls */}
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>
