@@ -3,46 +3,47 @@ import { Plus } from 'lucide-react';
 import Header from '../components/Header';
 import MealCard from '../components/MealCard';
 import Pagination from '../components/Pagination';
-import { MealResponse, PaginatedMeals } from '../types';
+import { MealResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
-import * as httpClient from '../lib/http-client';
+import * as mealService from '../services/meal.service';
 
 export default function Meals() {
   const [meals, setMeals] = useState<MealResponse[]>([]);
   const [filteredMeals, setFilteredMeals] = useState<MealResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const navigate = useNavigate();
 
-  // Fetch meals from API
+  // Fetch meals from API with service layer
   const fetchMeals = async (category: string, page: number) => {
     setLoading(true);
+    setError(null);
     try {
-      const endpoint =
-        category === 'all'
-          ? `/meal/all?page=${page}`
-          : `/meal/filter?category=${category}&page=${page}`;
+      const result = category === 'all'
+        ? await mealService.getAllMeals(page)
+        : await mealService.getMealsByCategory(category, page);
 
-      const { data, error } = await httpClient.get<PaginatedMeals>(endpoint);
-      
-      if (error) {
-        console.error('Failed to fetch meals:', error);
+      if (result.error) {
+        setError(result.error.message || 'Failed to fetch meals');
         return;
       }
 
+      const data = result.data;
       setMeals(Array.isArray(data?.content) ? data.content : []);
       setTotalPages(data?.totalPages || 0);
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Reload meals when category or page changes
+  // Fetch meals when category or page changes
   useEffect(() => {
     fetchMeals(selectedType, currentPage);
   }, [selectedType, currentPage]);
@@ -102,6 +103,22 @@ export default function Meals() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 font-semibold mb-4">{error}</p>
+          <button
+            onClick={() => fetchMeals(selectedType, currentPage)}
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }

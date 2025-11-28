@@ -1,20 +1,20 @@
 import * as httpClient from '../lib/http-client';
-import { MealResponse } from '../types';
+import { MealResponse, PaginatedMeals } from '../types';
 
-export const getAllMeals = async () => {
-  return httpClient.get<MealResponse[]>('/meals');
+export const getAllMeals = async (page: number = 0) => {
+  return httpClient.get<PaginatedMeals>('/meal/all?page=' + page);
 };
 
 export const getMealById = async (id: number) => {
-  return httpClient.get<MealResponse>(`/meals/${id}`);
+  return httpClient.get<MealResponse>(`/meal/${id}`);
+};
+
+export const getMealsByCategory = async (category: string, page: number = 0) => {
+  return httpClient.get<PaginatedMeals>(`/meal/filter?category=${category}&page=${page}`);
 };
 
 export const searchMeals = async (query: string) => {
-  return httpClient.get<MealResponse[]>(`/meals?search=${query}`);
-};
-
-export const getMealsByType = async (type: string) => {
-  return httpClient.get<MealResponse[]>(`/meals?type=${type}`);
+  return httpClient.get<MealResponse[]>(`/meal/search?query=${query}`);
 };
 
 export const createMeal = async (meal: Omit<MealResponse, 'id'>) => {
