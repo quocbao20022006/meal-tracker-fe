@@ -1,132 +1,260 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Clock, Users, Flame, Plus } from 'lucide-react';
-import { useMeals } from '../hooks/useMeals';
-import { useMealPlans } from '../hooks/useMealPlans';
-import { Meal } from '../types';
+import { useEffect, useState } from "react";
+import { ArrowLeft, Salad, Plus, Clock, User } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useMealPlans } from "../hooks/useMealPlans";
+import { MealResponse } from "../types"; // make sure Meal matches the API fields
 
-interface MealDetailProps {
-  mealId: string;
-  onBack: () => void;
-}
-
-export default function MealDetail({ mealId, onBack }: MealDetailProps) {
-  const { meals, loading: mealsLoading } = useMeals();
+export default function MealDetail() {
+  const { mealId } = useParams();
+  const navigate = useNavigate();
   const { createMealPlan } = useMealPlans();
-  const [meal, setMeal] = useState<Meal | null>(null);
-  const [loading, setLoading] = useState(mealsLoading);
-  const [activeTab, setActiveTab] = useState<'ingredients' | 'recipe' | 'nutrition'>('ingredients');
+
+  const [meal, setMeal] = useState<MealResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [activeTab, setActiveTab] = useState<"ingredients" | "recipe" | "nutrition">("ingredients");
 
   useEffect(() => {
-    loadMeal();
-  }, [mealId, meals]);
+    const fetchMealDetail = async () => {
+      try {
+        const res = await fetch(`/api/meal/${mealId}`);
+        if (!res.ok) throw new Error("Meal not found");
 
-  const loadMeal = async () => {
-    if (meals && meals.length > 0) {
-      const found = meals.find(m => m.id.toString() === mealId);
-      setMeal(found || null);
+        const data: MealResponse = await res.json();
+        setMeal(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMealDetail();
+  }, [mealId]);
+
+  // Checklist ingredients
+  const [checkedList, setCheckedList] = useState<boolean[]>([]);
+  // Load checklist from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(`meal-checklist-${mealId}`);
+    if (saved) {
+      setCheckedList(JSON.parse(saved));
+    } else if (meal?.meal_ingredients) {
+      setCheckedList(new Array(meal.meal_ingredients.length).fill(false));
     }
-    setLoading(false);
+  }, [mealId, meal]);
+  // Save checklist to localStorage when change
+  useEffect(() => {
+    if (checkedList.length > 0) {
+      localStorage.setItem(`meal-checklist-${mealId}`, JSON.stringify(checkedList));
+    }
+  }, [checkedList, mealId]);
+
+  const toggleCheck = (index: number) => {
+    setCheckedList(prev => {
+      const newList = [...prev];
+      newList[index] = !newList[index];
+      return newList;
+    });
   };
 
+  // Add to meal plan
   const addToTodaysPlan = async () => {
     if (!meal) return;
-
     setAdding(true);
-    const today = new Date().toISOString().split('T')[0];
+
+    const today = new Date().toISOString().split("T")[0];
 
     await createMealPlan({
       mealId: meal.id,
       date: today,
-      mealType: meal.mealType,
-      servings: 1
+      category: meal.category_name[0] ?? "mainCourse",
+      servings: 1,
     });
 
     setAdding(false);
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
       </div>
     );
-  }
 
-  if (!meal) {
+  if (!meal)
     return (
       <div className="flex-1 flex items-center justify-center">
         <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
       </div>
     );
-  }
-
-  const totalMacros = meal.protein + meal.carbs + meal.fats;
-  const proteinPercent = (meal.protein / totalMacros) * 100;
-  const carbsPercent = (meal.carbs / totalMacros) * 100;
-  const fatsPercent = (meal.fats / totalMacros) * 100;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Header Bar */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+          onClick={() => navigate("/meals")} // 👈 use router navigation instead of internal state
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 transition-all"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Back to Meals</span>
+          <ArrowLeft className="w-5 h-5" /> <span>Back</span>
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-xl">
-            <div className="relative h-80">
-              <img
-                src={meal.imageUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
-                alt={meal.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <h1 className="text-4xl font-bold text-white mb-2">{meal.name}</h1>
-                <p className="text-white/90">{meal.description}</p>
+      <div className="flex justify-start gap-10 max-w-8xl mx-auto p-6 bg-gray-50 dark:bg-gray-900">
+        {/* Meal main info */}
+        <div className="w-3/4">
+          {/* Meal info */}
+          <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
+            <div className="w-1/3">
+              <img src={meal.image_url} alt="" className="w-full h-full rounded-2xl object-cover" />
+            </div>
+            <div className="w-2/3 flex flex-col justify-between">
+              <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">{meal.meal_name}</h1>
+              <p className="mb-5 dark:text-white">{meal.meal_description}</p>
+              <div className="flex gap-10 mb-5 text-gray-900 dark:text-white">
+                <div className="flex gap-2 font-bold">
+                  <Clock className="w-5" />
+                  <span className="">Cooking time: {meal.cooking_time}</span>
+                </div>
+                <div className="flex gap-2 font-bold">
+                  <User />
+                  <span className="">Servings: {meal.servings}</span>
+                </div>
+                
+                <span className="">Total calories: {meal.calories}</span>
+              </div>
+              <div className="flex gap-3">
+                {meal.category_name.map((cat) => (
+                  <span
+                    key={cat}
+                    className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        
+          {/* Meal ingredients & instructions */}
+          <div className="flex items-stretch gap-10">
+            {/* Ingredients */}
+            <div className="w-1/3 p-5 border-emerald-400 border rounded-2xl">
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Ingredients</h2>
+              <div className="flex flex-col gap-3">
+                {meal.meal_ingredients.map((item, index) => (
+                  <label
+                    key={index}
+                    className="flex items-center gap-3 cursor-pointer text-gray-700 dark:text-gray-200"
+                  >
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                      checked={checkedList[index]}
+                      onChange={() => toggleCheck(index)}
+                    />
+                    <span className={`transition ${checkedList[index] ? "line-through opacity-60" : ""}`}>
+                      {item.ingredient_name} — {item.quantity}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <Flame className="w-6 h-6 mx-auto text-orange-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.calories}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Calories</p>
+            {/* Instructions */}
+            <div className="w-2/3 p-5 border-emerald-400 border rounded-2xl">
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
+              {meal.meal_instructions.map((s) => (
+                <div key={s.step} className="flex gap-3 items-start">
+                  <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
+                  <p className="mb-5 text-gray-800 dark:text-gray-200">{s.instruction}</p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <Clock className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.prepTime}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Prep (min)</p>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <Clock className="w-6 h-6 mx-auto text-teal-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.cookTime}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Cook (min)</p>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <Users className="w-6 h-6 mx-auto text-blue-500 mb-2" />
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{meal.servings}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Servings</p>
-                </div>
-              </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-              <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-                {['ingredients', 'recipe', 'nutrition'].map((tab) => (
+        {/* Meal sub info */}
+        <div className="w-1/4">
+          {/* Edit recipe */}
+          <button
+            onClick={addToTodaysPlan}
+            disabled={adding}
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Edit recipe
+          </button>
+          
+          {/* Add to Today */}
+          <button
+            onClick={addToTodaysPlan}
+            disabled={adding}
+            className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            {adding ? "Adding..." : "Add to Today's Plan"}
+          </button>
+
+          {/* Nutrition */}
+          <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <Salad className="w-6 h-6 text-emerald-500" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Nutritions
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {meal.nutrition.map((item, index) => (
+                <span
+                  key={index}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
+                            text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      
+      
+      
+      
+      
+      
+      
+      {/* Cover Image */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-5xl mx-auto p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
+
+            {/* Image */}
+            <div className="relative h-80">
+              <img
+                src={meal.image_url}
+                alt={meal.meal_name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-5 left-5 right-5">
+                <h1 className="text-3xl font-bold text-white">{meal.meal_name}</h1>
+                <p className="text-white/90">{meal.meal_description}</p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="p-6">
+              <div className="flex gap-6 border-b pb-4 mb-4">
+                {["ingredients", "recipe", "nutrition"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab as typeof activeTab)}
-                    className={`px-6 py-3 font-medium capitalize transition-all ${
-                      activeTab === tab
-                        ? 'text-emerald-600 border-b-2 border-emerald-600'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-emerald-500'
+                    className={`capitalize font-medium ${
+                      activeTab === tab ? "text-emerald-600 border-b-2 border-emerald-600" : "text-gray-600"
                     }`}
                   >
                     {tab}
@@ -134,91 +262,56 @@ export default function MealDetail({ mealId, onBack }: MealDetailProps) {
                 ))}
               </div>
 
-              {activeTab === 'ingredients' && (
+              {/* Ingredients Tab */}
+              {activeTab === "ingredients" && (
                 <div className="space-y-3">
-                  <p className="text-gray-600 dark:text-gray-400">Ingredients coming soon</p>
+                  {meal.meal_ingredients.map((i) => (
+                    <div key={i.ingredient_name} className="flex justify-between bg-gray-100 p-3 rounded-xl">
+                      <span>{i.ingredient_name}</span>
+                      <span>{i.quantity}</span>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {activeTab === 'recipe' && (
+              {/* Recipe Tab */}
+              {activeTab === "recipe" && (
                 <div className="space-y-4">
-                  <p className="text-gray-600 dark:text-gray-400">Recipe steps coming soon</p>
+                  {meal.meal_instructions.map((s) => (
+                    <div key={s.step} className="flex gap-3 items-start">
+                      <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
+                      <p className="text-gray-800 dark:text-gray-200">{s.instruction}</p>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {activeTab === 'nutrition' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                      <div className="text-4xl font-bold text-red-600 mb-2">
-                        {proteinPercent.toFixed(0)}%
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Protein</div>
-                      <div className="text-lg font-semibold text-gray-800 dark:text-white">
-                        {meal.protein}g
-                      </div>
-                    </div>
-                    <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                      <div className="text-4xl font-bold text-blue-600 mb-2">
-                        {carbsPercent.toFixed(0)}%
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Carbs</div>
-                      <div className="text-lg font-semibold text-gray-800 dark:text-white">
-                        {meal.carbs}g
-                      </div>
-                    </div>
-                    <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-                      <div className="text-4xl font-bold text-yellow-600 mb-2">
-                        {fatsPercent.toFixed(0)}%
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Fats</div>
-                      <div className="text-lg font-semibold text-gray-800 dark:text-white">
-                        {meal.fats}g
-                      </div>
-                    </div>
+              {/* Nutrition Tab */}
+              {activeTab === "nutrition" && (
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center bg-red-100 p-5 rounded-xl">
+                    <p className="text-3xl font-bold">{proteinPercent.toFixed(0)}%</p>
+                    <p>Protein ({meal.nutrition ?? 0}g)</p>
                   </div>
-
-                  <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
-                      Nutrition per Serving
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Energy</span>
-                        <span className="font-semibold text-gray-800 dark:text-white">
-                          {meal.calories} kcal
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Total Fat</span>
-                        <span className="font-semibold text-gray-800 dark:text-white">
-                          {meal.fats}g
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Carbohydrates</span>
-                        <span className="font-semibold text-gray-800 dark:text-white">
-                          {meal.carbs}g
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Protein</span>
-                        <span className="font-semibold text-gray-800 dark:text-white">
-                          {meal.protein}g
-                        </span>
-                      </div>
-                    </div>
+                  <div className="text-center bg-blue-100 p-5 rounded-xl">
+                    <p className="text-3xl font-bold">{carbsPercent.toFixed(0)}%</p>
+                    <p>Carbs ({meal.nutrition ?? 0}g)</p>
+                  </div>
+                  <div className="text-center bg-yellow-100 p-5 rounded-xl">
+                    <p className="text-3xl font-bold">{fatsPercent.toFixed(0)}%</p>
+                    <p>Fats ({meal.nutrition ?? 0}g)</p>
                   </div>
                 </div>
               )}
 
+              {/* Add to Today */}
               <button
                 onClick={addToTodaysPlan}
                 disabled={adding}
-                className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Plus className="w-5 h-5" />
-                {adding ? 'Adding...' : 'Add to Today\'s Plan'}
+                {adding ? "Adding..." : "Add to Today's Plan"}
               </button>
             </div>
           </div>

@@ -64,6 +64,14 @@ export interface MealResponse {
   category_name: string[];
 }
 
+export interface PaginatedMeals {
+  content: MealResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // current page
+  size: number;
+}
+
 export interface MealPlan {
   id: number;
   userId: number;

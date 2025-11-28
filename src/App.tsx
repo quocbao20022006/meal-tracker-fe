@@ -1,61 +1,45 @@
-import { useState } from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { BrowserRouter } from 'react-router-dom';
-// import { supabase } from './lib/supabase';
-import Dashboard from './pages/Dashboard';
-import Meals from './pages/Meals';
-import MealDetail from './pages/MealDetail';
-import Planner from './pages/Planner';
-import History from './pages/History';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import Sidebar from './components/Sidebar';
-// import Login from './pages/Login';
-// import Register from './pages/Register';
-// import Onboarding from './pages/Onboarding';
-// import { useAuth } from './contexts/AuthContext';
-// import { AuthProvider } from './contexts/AuthContext';
+import { useState } from "react";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+
+// Pages
+import Dashboard from "./pages/Dashboard";
+import Meals from "./pages/Meals";
+import MealDetail from "./pages/MealDetail";
+import Planner from "./pages/Planner";
+import History from "./pages/History";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+// import SettingsPage from "./pages/Settings";
+import Sidebar from "./components/Sidebar";
 
 function AppContent() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
-  // const { user, authLoading, hasProfile } = useAuth();
+  const navigate = useNavigate();
+  const [page, setPage] = useState("dashboard");
 
-  const handleViewMeal = (mealId: string) => {
-    setSelectedMealId(mealId);
-    setCurrentPage('meal-detail');
+  const handleNavigate = (p: string) => {
+    setPage(p);
+    if (p === "meals") {
+      navigate("/meals");
+    }
   };
-
-  const handleBackFromMeal = () => {
-    setSelectedMealId(null);
-    setCurrentPage('meals');
-  };
-
-  // if (authLoading) {
-  //   return <div>Loading...</div>;
-  // }
-
-  // if (!user) {
-  //   return <Login />;
-  // }
-
-  // if (!hasProfile) {
-  //   return <Onboarding />;
-  // }
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar activePage={currentPage} onNavigate={setCurrentPage} />
+      <Sidebar activePage={page} onNavigate={handleNavigate} />
 
-      {currentPage === 'dashboard' && <Dashboard />}
-      {currentPage === 'meals' && <Meals onViewMeal={handleViewMeal} />}
-      {currentPage === 'meal-detail' && selectedMealId && (
-        <MealDetail mealId={selectedMealId} onBack={handleBackFromMeal} />
-      )}
-      {currentPage === 'planner' && <Planner />}
-      {currentPage === 'history' && <History />}
-      {currentPage === 'profile' && <Profile />}
-      {currentPage === 'settings' && <Settings />}
+      <div className="flex-1 overflow-auto">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/meals" element={<Meals onViewMeal={(id) => navigate(`/meal/${id}`)} />} />
+          <Route path="/meal/:mealId" element={<MealDetail />} />
+          <Route path="/planner" element={<Planner />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Dashboard />} />
+        </Routes>
+      </div>
     </div>
   );
 }
@@ -64,10 +48,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <AppContent />
+        <Routes>
+          <Route path="*" element={<AppContent />} />
+        </Routes>
       </BrowserRouter>
-      {/* <AuthProvider> */}
-      {/* </AuthProvider> */}
     </ThemeProvider>
   );
 }
