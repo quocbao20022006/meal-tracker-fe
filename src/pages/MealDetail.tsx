@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Salad, Plus, Clock, User } from "lucide-react";
+import { ArrowLeft, Salad, Plus, Clock, User, BatteryCharging } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMealPlans } from "../hooks/useMealPlans";
 import { MealResponse } from "../types"; // make sure Meal matches the API fields
@@ -113,16 +113,18 @@ export default function MealDetail() {
               <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">{meal.meal_name}</h1>
               <p className="mb-5 dark:text-white">{meal.meal_description}</p>
               <div className="flex gap-10 mb-5 text-gray-900 dark:text-white">
-                <div className="flex gap-2 font-bold">
+                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
                   <Clock className="w-5" />
                   <span className="">Cooking time: {meal.cooking_time}</span>
                 </div>
-                <div className="flex gap-2 font-bold">
-                  <User />
-                  <span className="">Servings: {meal.servings}</span>
+                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
+                  <User className="w-5" />
+                  <span>Servings: {meal.servings}</span>
                 </div>
-                
-                <span className="">Total calories: {meal.calories}</span>
+                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
+                  <BatteryCharging className="w-5" />
+                  <span>Total calories: {meal.calories}</span>
+                </div>
               </div>
               <div className="flex gap-3">
                 {meal.category_name.map((cat) => (
@@ -218,6 +220,9 @@ export default function MealDetail() {
               ))}
             </div>
           </div>
+
+          {/* Similar recipes */}
+          
         </div>
       </div>
       
