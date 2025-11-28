@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { BrowserRouter } from 'react-router-dom';
 // import { supabase } from './lib/supabase';
 import Dashboard from './pages/Dashboard';
 import Meals from './pages/Meals';
@@ -62,8 +63,10 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
       {/* <AuthProvider> */}
-      <AppContent />
       {/* </AuthProvider> */}
     </ThemeProvider>
   );

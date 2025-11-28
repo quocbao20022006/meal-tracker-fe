@@ -44,19 +44,24 @@ export interface UpdateUserProfileRequest {
   dailyCalorieGoal?: number;
 }
 
-export interface Meal {
+export interface MealResponse {
   id: number;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  mealType: string;
+  meal_name: string;
+  meal_description: string | null;
+  image_url: string | null;
+  meal_ingredients: {
+    ingredient_name: string;
+    quantity: number;
+  }[];
+  meal_instructions: {
+    step: number;
+    instruction: string;
+  }[];
+  cooking_time: string;
   calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  prepTime: number;
-  cookTime: number;
   servings: number;
+  nutrition: string[];
+  category_name: string[];
 }
 
 export interface MealPlan {
