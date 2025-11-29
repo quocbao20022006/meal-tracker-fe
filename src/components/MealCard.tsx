@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Clock, Eye } from "lucide-react";
 import { MealResponse } from "../types";
 
@@ -7,23 +9,37 @@ interface MealCardProps {
 }
 
 export default function MealCard({ meal, onViewMeal }: MealCardProps) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const navigate = useNavigate();
+
+  // Track unmount to avoid setting state after component removed
+  useEffect(() => {
+    let mounted = true;
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div
       className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer"
       onClick={() => onViewMeal(meal.id.toString())}
     >
-      <div className="relative h-48 overflow-hidden">
+      {/* IMAGE SECTION - SKELETON + LAZY LOAD */}
+      <div className="relative aspect-[4/3] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+        {!imgLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-gray-300 dark:bg-gray-600"></div>
+        )}
+
         <img
-          src={
-            meal.image_url ||
-            "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400"
-          }
+          src={meal.image_url || ""}
           alt={meal.meal_name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          loading="lazy"
+          onLoad={() => setImgLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-all ${
+            imgLoaded ? "opacity-100" : "opacity-0"
+          }`}
         />
-        <div className="absolute top-3 right-3 bg-white dark:bg-gray-800 px-3 py-1 rounded-full text-sm font-semibold text-gray-700 dark:text-gray-300">
-          {meal.calories} cal
-        </div>
       </div>
 
       <div className="p-4">
@@ -55,7 +71,12 @@ export default function MealCard({ meal, onViewMeal }: MealCardProps) {
           <span>Nutrition: {meal.nutrition.join(", ")}</span>
         </div>
 
-        <button className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
+        <button 
+          onClick={(e) => {
+          e.stopPropagation(); // tránh bị click vào card cha
+          navigate(`/meal/${meal.id}`);
+          }}
+          className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
           <Eye className="w-4 h-4" />
           See recipe
         </button>

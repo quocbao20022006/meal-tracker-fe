@@ -48,24 +48,12 @@ export default function Meals() {
     fetchMeals(selectedType, currentPage);
   }, [selectedType, currentPage]);
 
-  // Search filter (local UI only, does not call API)
-  // const searchFilteredMeals = meals.filter(
-  //   (m) =>
-  //     m.meal_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     m.meal_description?.toLowerCase().includes(searchQuery.toLowerCase())
-  // );
-
   // Handle pagination
   const handlePageChange = (page: number) => {
     if (page >= 0 && page < totalPages) {
       setCurrentPage(page);
     }
   };
-
-  // Get meals
-  // useEffect(() => {
-  //   fetchMeals(currentPage);
-  // }, [currentPage]);
 
   // Filter meals by category
   useEffect(() => {

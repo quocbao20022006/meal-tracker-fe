@@ -9,6 +9,10 @@ export const getMealById = async (id: number) => {
   return httpClient.get<MealResponse>(`/meal/${id}`);
 };
 
+export const getSimilarMeals = async (id: number) => {
+  return httpClient.get<MealResponse>(`/meal/${id}/recommendations`);
+}
+
 export const getMealsByCategory = async (category: string, page: number = 0) => {
   return httpClient.get<PaginatedMeals>(`/meal/filter?category=${category}&page=${page}`);
 };

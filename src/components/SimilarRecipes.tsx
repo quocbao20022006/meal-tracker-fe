@@ -1,14 +1,14 @@
-import { Meal } from "../types";
+import { MealResponse } from "../types";
 import { ChevronRight } from "lucide-react";
 
 interface SimilarRecipesProps {
-  recipes: Meal[];
+  recipes: MealResponse[];
   onSelect?: (id: string) => void;
 }
 
 export default function SimilarRecipes({ recipes, onSelect }: SimilarRecipesProps) {
   return (
-    <div className="mt-10">
+    <div className="p-6 mt-10 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
       <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
         Similar Recipes
       </h2>
@@ -22,7 +22,7 @@ export default function SimilarRecipes({ recipes, onSelect }: SimilarRecipesProp
           >
             {/* Image  */}
             <img
-              src={meal.image_url || "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"}
+              src={meal.image_url}
               alt={meal.meal_name}
               className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
             />

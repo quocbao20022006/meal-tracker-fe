@@ -58,7 +58,7 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/meals" element={<Meals />} />
-        <Route path="/meals/:id" element={<MealDetail />} />
+        <Route path="/meal/:id" element={<MealDetail />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/profile" element={<Profile />} />
