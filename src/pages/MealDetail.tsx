@@ -5,6 +5,7 @@ import { useMealPlans } from "../hooks/useMealPlans";
 import { MealResponse } from "../types";
 import { getMealById, getSimilarMeals } from "../services/meal.service";
 import SimilarRecipes from "../components/SimilarRecipes";
+import MealEditModal from "../components/MealEditModal";
 
 export default function MealDetail() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function MealDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [checkedList, setCheckedList] = useState<boolean[]>([]);
+  const [editing, setEditing] = useState(false);
 
   // Get meal details data
   useEffect(() => {
@@ -94,18 +96,18 @@ export default function MealDetail() {
   };
 
   if (loading)
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+    </div>
+  );
 
   if (!meal)
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
-      </div>
-    );
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col">
@@ -187,38 +189,38 @@ export default function MealDetail() {
             {/* Instructions */}
             <div className="w-2/3 p-5 border-emerald-400 border rounded-2xl">
               <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
-              {meal.meal_instructions.map((s) => (
-                <div key={s.step} className="flex gap-3 items-start">
-                  <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
-                  <p className="mb-5 text-gray-800 dark:text-gray-200">{s.instruction}</p>
-                </div>
-              ))}
-
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
-              {meal.meal_instructions.map((s) => (
-                <div key={s.step} className="flex gap-3 items-start">
-                  <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
-                  <p className="mb-5 text-gray-800 dark:text-gray-200">{s.instruction}</p>
-                </div>
-              ))}
-
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
-              {meal.meal_instructions.map((s) => (
-                <div key={s.step} className="flex gap-3 items-start">
-                  <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
-                  <p className="mb-5 text-gray-800 dark:text-gray-200">{s.instruction}</p>
-                </div>
-              ))}
+              {meal?.meal_instructions?.length ? (
+                meal.meal_instructions.map((s) => (
+                  <div key={s.step} className="flex gap-3 items-start">
+                    <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">
+                      {s.step}
+                    </span>
+                    <p className="mb-5 text-gray-800 dark:text-gray-200">
+                      {s.instruction}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-600 dark:text-gray-400">No instructions available</p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Meal sub info */}
         <div className="w-1/4">
+          {/* Edit recipe modal */}
+          <MealEditModal
+            meal={meal}
+            onClose={() => setEditing(false)}
+            onUpdate={(updated) => setMeal(updated)}
+            isOpen={editing}
+          />
+
           {/* Edit recipe */}
           <button
-            onClick={addToTodaysPlan}
-            disabled={adding}
+            onClick={() => setEditing(true)}
+            // disabled={adding}
             className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Plus className="w-5 h-5" />

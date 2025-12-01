@@ -1,5 +1,6 @@
 import * as httpClient from '../lib/http-client';
-import { MealResponse, PaginatedMeals } from '../types';
+import axios from "axios";
+import { MealResponse, PaginatedMeals, UpdateMealRequest } from '../types';
 
 export const getAllMeals = async (page: number = 0) => {
   return httpClient.get<PaginatedMeals>('/meal/all?page=' + page);
@@ -25,8 +26,21 @@ export const createMeal = async (meal: Omit<MealResponse, 'id'>) => {
   return httpClient.post<MealResponse>('/meals', meal);
 };
 
-export const updateMeal = async (id: number, meal: Partial<MealResponse>) => {
-  return httpClient.put<MealResponse>(`/meals/${id}`, meal);
+export const updateMeal = async (id: number, meal: UpdateMealRequest) => {
+  const formData = new FormData();
+
+  // Append image nếu có
+  if (meal.image instanceof File) {
+    formData.append("image", meal.image);
+  }
+
+  // Append phần data JSON
+  const { image, ...mealData } = meal;
+  formData.append("data", new Blob([JSON.stringify(mealData)], { type: "application/json" }));
+
+  return httpClient.put<MealResponse>(`/meal/update/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 };
 
 export const deleteMeal = async (id: number) => {

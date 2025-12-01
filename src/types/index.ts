@@ -51,10 +51,12 @@ export interface MealResponse {
   id: number;
   meal_name: string;
   meal_description: string | null;
-  image_url: string | null;
+  image_url: File | null;
   meal_ingredients: {
+    id: number;
     ingredient_name: string;
     quantity: number;
+    calories: number;
   }[];
   meal_instructions: {
     step: number;
@@ -94,9 +96,22 @@ export interface CreateMealPlanRequest {
   servings: number;
 }
 
-export interface UpdateMealPlanRequest {
-  servings?: number;
-  completed?: boolean;
+export interface UpdateMealRequest {
+  meal_name: string;
+  meal_description?: string | null;
+  image?: File | null; // image file, tương ứng với MultipartFile
+  meal_ingredients: {
+    ingredient_id: number;
+    quantity: number;
+  }[];
+  meal_instructions: {
+    step: number;
+    instruction: string;
+  }[];
+  cooking_time: string;
+  servings: number;
+  nutrition?: string[];
+  category_name?: string[];
 }
 
 export interface ApiError {
@@ -109,4 +124,21 @@ export interface ApiResponse<T> {
   data: T | null;
   error: ApiError | null;
   loading?: boolean;
+}
+
+export interface IngredientResponse {
+  id: number;
+  name: string;
+  calories: number;
+  description: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface PaginatedIngredients {
+  content: IngredientResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // current page
+  size: number;
 }
