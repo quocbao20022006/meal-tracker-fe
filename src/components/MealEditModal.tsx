@@ -15,6 +15,7 @@ interface EditMealModalProps {
 type InstructionKey = "step" | "instruction";
 
 export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditMealModalProps) {
+    const [mealForm, setMealForm] = useState<MealResponse>(meal);
     const [form, setForm] = useState<UpdateMealRequest>({
       meal_name: meal.meal_name,
       image: null, // chưa có ảnh mới
@@ -31,7 +32,7 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
       cooking_time: meal.cooking_time || "",
       servings: meal.servings || 1
     });
-    const [mealForm, setMealForm] = useState<MealResponse>;
+
     const [allIngredients, setAllIngredients] = useState<IngredientResponse[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -156,7 +157,7 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
     useEffect(() => {
       if (isOpen) {
         setLoading(false);  // mở modal thì đảm bảo không bị block bởi loading
-        setForm({ ...meal }); // reset lại form từ meal gốc mỗi lần mở
+        setMealForm({ ...meal }); // reset lại form từ meal gốc mỗi lần mở
       }
     }, [isOpen, meal]);
 
@@ -231,9 +232,9 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
             <label className="font-medium text-gray-700 dark:text-gray-200">Image URL</label>
             
             {/* Preview image */}
-            {form.image_url && (
+            {mealForm.image_url && (
                 <img
-                src={form.image_url}
+                src={mealForm.image_url}
                 alt="Meal"
                 className="w-full h-64 object-cover rounded-lg mb-2"
                 />
@@ -241,7 +242,7 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
 
             <input
                 type="file"
-                accept="image/*"
+                // accept="image/*"
                 onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -265,9 +266,9 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
                 {form.meal_ingredients.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
                     <AutocompleteIngredientInput
-                        value={item.ingredient_name}
+                        value={"text"}
                         onSelect={(ing) => handleIngredientChange(index, "ingredient_name", ing.name, ing.calories)}
-                        placeholder={item.ingredient_name || "Type ingredient..."}
+                        // placeholder={item.ingredient_id || "Type ingredient..."}
                     />
 
                     <input

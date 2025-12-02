@@ -51,7 +51,7 @@ export interface MealResponse {
   id: number;
   meal_name: string;
   meal_description: string | null;
-  image_url: File | null;
+  image_url: string | null;
   meal_ingredients: {
     id: number;
     ingredient_name: string;
