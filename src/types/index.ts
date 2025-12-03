@@ -18,6 +18,31 @@ export interface SignupRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+export interface OtpResponse {
+  message: string;
+  status: string;
+}
+
+export interface PasswordResetResponse {
+  message: string;
+  status: string;
+}
+
 export interface UserProfile {
   id: number;
   userId: number;
