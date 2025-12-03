@@ -124,6 +124,37 @@ export interface UpdateMealPlanRequest {
   completed?: boolean;
 }
 
+export interface MealPlanTemplate {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  goal?: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMealPlanTemplateRequest {
+  name: string;
+  description?: string;
+  goal?: string;
+  startDate: string;
+  endDate: string;
+  isActive?: boolean;
+}
+
+export interface UpdateMealPlanTemplateRequest {
+  name?: string;
+  description?: string;
+  goal?: string;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+}
+
 export interface ApiError {
   message: string;
   status: number;

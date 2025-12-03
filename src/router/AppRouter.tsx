@@ -10,6 +10,8 @@ import Dashboard from '../pages/Dashboard';
 import Meals from '../pages/Meals';
 import MealDetail from '../pages/MealDetail';
 import Planner from '../pages/Planner';
+import Plans from '../pages/Plans';
+import PlanDetail from '../pages/PlanDetail';
 import HistoryPage from '../pages/History';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
@@ -56,6 +58,8 @@ function AppRoutes() {
         <Route path="/meals" element={<Meals />} />
         <Route path="/meals/:id" element={<MealDetail />} />
         <Route path="/planner" element={<Planner />} />
+        <Route path="/plans" element={<Plans />} />
+        <Route path="/plans/:planId" element={<PlanDetail />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />

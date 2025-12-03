@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Salad, Plus, Clock, User, BatteryCharging } from "lucide-react";
+import { ArrowLeft, Plus, Clock, Flame, ChefHat } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMealPlans } from "../hooks/useMealPlans";
 import { MealResponse } from "../types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Header from "../components/Header";
 import * as httpClient from "../lib/http-client";
 
 export default function MealDetail() {
@@ -13,7 +15,7 @@ export default function MealDetail() {
   const [meal, setMeal] = useState<MealResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [activeTab, setActiveTab] = useState<"ingredients" | "recipe" | "nutrition">("ingredients");
+  const [activeTab, setActiveTab] = useState<"ingredients" | "instructions" | "nutrition">("ingredients");
 
   useEffect(() => {
     const fetchMealDetail = async () => {
@@ -89,223 +91,200 @@ export default function MealDetail() {
 
   if (!meal)
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
+      <div className="flex-1 flex flex-col">
+        <Header title="Meal Detail" />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
+        </div>
       </div>
     );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <button
-          onClick={() => navigate("/meals")} // 👈 use router navigation instead of internal state
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" /> <span>Back</span>
-        </button>
-      </div>
+      <Header title={meal.meal_name} />
 
-      <div className="flex justify-start gap-10 max-w-8xl mx-auto p-6 bg-gray-50 dark:bg-gray-900">
-        {/* Meal main info */}
-        <div className="w-3/4">
-          {/* Meal info */}
-          <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
-            <div className="w-1/3">
-              <img src={meal.image_url ?? ""} alt="" className="w-full h-full rounded-2xl object-cover" />
-            </div>
-            <div className="w-2/3 flex flex-col justify-between">
-              <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">{meal.meal_name}</h1>
-              <p className="mb-5 dark:text-white">{meal.meal_description}</p>
-              <div className="flex gap-10 mb-5 text-gray-900 dark:text-white">
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <Clock className="w-5" />
-                  <span className="">Cooking time: {meal.cooking_time}</span>
-                </div>
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <User className="w-5" />
-                  <span>Servings: {meal.servings}</span>
-                </div>
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <BatteryCharging className="w-5" />
-                  <span>Total calories: {meal.calories}</span>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                {meal.category_name.map((cat) => (
-                  <span
-                    key={cat}
-                    className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize"
-                  >
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        
-          {/* Meal ingredients & instructions */}
-          <div className="flex items-stretch gap-10">
-            {/* Ingredients */}
-            <div className="w-1/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Ingredients</h2>
-              <div className="flex flex-col gap-3">
-                {meal.meal_ingredients.map((item, index) => (
-                  <label
-                    key={index}
-                    className="flex items-center gap-3 cursor-pointer text-gray-700 dark:text-gray-200"
-                  >
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 accent-emerald-500 cursor-pointer"
-                      checked={checkedList[index]}
-                      onChange={() => toggleCheck(index)}
-                    />
-                    <span className={`transition ${checkedList[index] ? "line-through opacity-60" : ""}`}>
-                      {item.ingredient_name} — {item.quantity}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="w-2/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
-              {meal.meal_instructions.map((s) => (
-                <div key={s.step} className="flex gap-3 items-start">
-                  <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
-                  <p className="mb-5 text-gray-800 dark:text-gray-200">{s.instruction}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Meal sub info */}
-        <div className="w-1/4">
-          {/* Edit recipe */}
-          <button
-            onClick={addToTodaysPlan}
-            disabled={adding}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Edit recipe
-          </button>
-          
-          {/* Add to Today */}
-          <button
-            onClick={addToTodaysPlan}
-            disabled={adding}
-            className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            {adding ? "Adding..." : "Add to Today's Plan"}
-          </button>
-
-          {/* Nutrition */}
-          <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <Salad className="w-6 h-6 text-emerald-500" />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Nutritions
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              {meal.nutrition.map((item, index) => (
-                <span
-                  key={index}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
-                            text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Similar recipes */}
-          
-        </div>
-      </div>
-      
-      
-      
-      
-      
-      
-      
-      
-      {/* Cover Image */}
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
         <div className="max-w-5xl mx-auto p-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate("/meals")}
+            className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-6 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Meals
+          </button>
 
-            {/* Image */}
-            <div className="relative h-80">
-              <img
-                src={meal.image_url ?? ""}
-                alt={meal.meal_name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-5 left-5 right-5">
-                <h1 className="text-3xl font-bold text-white">{meal.meal_name}</h1>
-                <p className="text-white/90">{meal.meal_description}</p>
+          {/* Meal Image & Basic Info */}
+          <Card className="mb-6 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+              {/* Image */}
+              <div className="md:col-span-1">
+                <img
+                  src={meal.image_url || "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400"}
+                  alt={meal.meal_name}
+                  className="w-full h-64 object-cover rounded-2xl"
+                />
+              </div>
+
+              {/* Info */}
+              <div className="md:col-span-2 flex flex-col justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                    {meal.meal_name}
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
+                    {meal.meal_description}
+                  </p>
+
+                  {/* Quick Info */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Cooking time</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{meal.cooking_time}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Calories</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{meal.calories}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ChefHat className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Servings</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{meal.servings}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {meal.category_name.map((cat) => (
+                      <span
+                        key={cat}
+                        className="text-xs px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 capitalize font-medium"
+                      >
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add Button */}
+                <button
+                  onClick={addToTodaysPlan}
+                  disabled={adding}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  {adding ? "Adding..." : "Add to Today's Plan"}
+                </button>
               </div>
             </div>
+          </Card>
 
+          {/* Tabs Content */}
+          <div className="space-y-4">
             {/* Tabs */}
-            <div className="p-6">
-              <div className="flex gap-6 border-b pb-4 mb-4">
-                {["ingredients", "recipe", "nutrition"].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as typeof activeTab)}
-                    className={`capitalize font-medium ${
-                      activeTab === tab ? "text-emerald-600 border-b-2 border-emerald-600" : "text-gray-600"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Ingredients Tab */}
-              {activeTab === "ingredients" && (
-                <div className="space-y-3">
-                  {meal.meal_ingredients.map((i) => (
-                    <div key={i.ingredient_name} className="flex justify-between bg-gray-100 p-3 rounded-xl">
-                      <span>{i.ingredient_name}</span>
-                      <span>{i.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Recipe Tab */}
-              {activeTab === "recipe" && (
-                <div className="space-y-4">
-                  {meal.meal_instructions.map((s) => (
-                    <div key={s.step} className="flex gap-3 items-start">
-                      <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">{s.step}</span>
-                      <p className="text-gray-800 dark:text-gray-200">{s.instruction}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add to Today */}
-              <button
-                onClick={addToTodaysPlan}
-                disabled={adding}
-                className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                {adding ? "Adding..." : "Add to Today's Plan"}
-              </button>
+            <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
+              {[
+                { key: "ingredients" as const, label: "Ingredients" },
+                { key: "instructions" as const, label: "Instructions" },
+                { key: "nutrition" as const, label: "Nutrition" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`py-3 px-4 font-medium border-b-2 transition-colors ${
+                    activeTab === tab.key
+                      ? "border-emerald-600 text-emerald-600"
+                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
+
+            {/* Ingredients Tab */}
+            {activeTab === "ingredients" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ingredients</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {meal.meal_ingredients.map((item, index) => (
+                      <label
+                        key={index}
+                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                          checked={checkedList[index] || false}
+                          onChange={() => toggleCheck(index)}
+                        />
+                        <span className={`flex-1 transition ${checkedList[index] ? "line-through opacity-60" : "text-gray-900 dark:text-white"}`}>
+                          {item.ingredient_name}
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                          {item.quantity}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Instructions Tab */}
+            {activeTab === "instructions" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Instructions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {meal.meal_instructions.map((s) => (
+                      <div key={s.step} className="flex gap-4">
+                        <div className="flex-shrink-0">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                            {s.step}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 dark:text-gray-300 pt-1">{s.instruction}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Nutrition Tab */}
+            {activeTab === "nutrition" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nutritional Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-3">
+                    {meal.nutrition.map((item, index) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg font-medium text-sm"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
