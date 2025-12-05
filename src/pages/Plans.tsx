@@ -1,70 +1,79 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { MealPlanTemplate, CreateMealPlanTemplateRequest } from '../types';
-import * as mealPlanService from '../services/meal-plan.service';
+import { useEffect, useState } from "react";
+import { Plus, Trash2, Calendar, AlertCircle, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  CreateMealPlanRequest,
+  CreateMealPlanTemplateRequest,
+  MealPlanRequest,
+  MealPlanResponse,
+  PlanType,
+} from "../types";
+import * as mealPlanService from "../services/meal-plan.service";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { formatDate } from "@/utils";
 
 export default function Plans() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<MealPlanTemplate[]>([]);
+  const [plans, setPlans] = useState<MealPlanResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const [formData, setFormData] = useState<CreateMealPlanTemplateRequest>({
-    name: '',
-    description: '',
-    goal: '',
-    startDate: '',
-    endDate: '',
+  const { user } = useAuthContext();
+
+  const [formData, setFormData] = useState<CreateMealPlanRequest>({
+    name: "",
+    startDate: "",
+    endDate: "",
     isActive: true,
+    planType: PlanType.WEEKLY,
+    userId: user?.id!,
+    note: "",
+    targetCalories: 0,
   });
 
   useEffect(() => {
-    loadPlans();
-  }, []);
+    if (user?.id) {
+      loadPlans();
+    }
+  }, [user?.id]);
 
   const loadPlans = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Mock data for demo
-      const mockPlans: MealPlanTemplate[] = [
-        {
-          id: 1,
-          userId: 1,
-          name: 'Summer Diet Plan',
-          description: 'Lose weight and get fit for summer',
-          goal: 'Lose weight',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          userId: 1,
-          name: 'Winter Fitness Goal',
-          description: 'Build muscle and increase strength',
-          goal: 'Build muscle',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-      setPlans(mockPlans);
+      const result = await mealPlanService.getAllMealPlans({
+        userId: user?.id,
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Failed to fetch meals");
+        return;
+      }
+
+      const data = result.data?.content || [];
+      setPlans(data);
     } catch (err) {
-      console.error('Error loading plans:', err);
-      setError('Failed to load plans');
+      console.error("Error loading plans:", err);
+      setError("Failed to load plans");
     } finally {
       setLoading(false);
     }
@@ -72,24 +81,24 @@ export default function Plans() {
 
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
-      setError('Plan name is required');
+      setError("Plan name is required");
       return;
     }
 
     if (!formData.startDate) {
-      setError('Start date is required');
+      setError("Start date is required");
       return;
     }
 
     if (!formData.endDate) {
-      setError('End date is required');
+      setError("End date is required");
       return;
     }
 
     if (new Date(formData.startDate) > new Date(formData.endDate)) {
-      setError('Start date must be before end date');
+      setError("Start date must be before end date");
       return;
     }
 
@@ -97,48 +106,51 @@ export default function Plans() {
     setError(null);
 
     try {
-      const result = await mealPlanService.createMealPlan(formData as any);
+      const body: CreateMealPlanRequest = {
+        userId: user?.id!,
+        name: formData.name,
+        endDate: formatDate(formData.endDate),
+        startDate: formatDate(formData.startDate),
+        isActive: formData.isActive || false,
+        targetCalories: formData.targetCalories,
+        note: formData.note,
+        planType: formData.planType,
+      };
+      const result = await mealPlanService.createMealPlan(body);
       if (result.data) {
-        setFormData({
-          name: '',
-          description: '',
-          goal: '',
-          startDate: '',
-          endDate: '',
-          isActive: true,
-        });
+        setFormData(body);
         setOpen(false);
         await loadPlans();
       }
     } catch (err) {
-      console.error('Error creating plan:', err);
-      setError('Failed to create plan');
+      console.error("Error creating plan:", err);
+      setError("Failed to create plan");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeletePlan = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
+    if (!confirm("Are you sure you want to delete this plan?")) return;
 
     try {
       await mealPlanService.deleteMealPlan(id);
       await loadPlans();
     } catch (err) {
-      console.error('Error deleting plan:', err);
-      setError('Failed to delete plan');
+      console.error("Error deleting plan:", err);
+      setError("Failed to delete plan");
     }
   };
 
-  const handleToggleActive = async (plan: MealPlanTemplate) => {
+  const handleToggleActive = async (plan: MealPlanResponse) => {
     try {
       await mealPlanService.updateMealPlan(plan.id, {
         completed: !plan.isActive,
       });
       await loadPlans();
     } catch (err) {
-      console.error('Error updating plan:', err);
-      setError('Failed to update plan');
+      console.error("Error updating plan:", err);
+      setError("Failed to update plan");
     }
   };
 
@@ -150,7 +162,7 @@ export default function Plans() {
     return diffDays;
   };
 
-  const getStatusBadge = (plan: MealPlanTemplate) => {
+  const getStatusBadge = (plan: MealPlanResponse) => {
     const daysLeft = getDaysUntilEnd(plan.endDate);
     if (!plan.isActive) {
       return (
@@ -197,7 +209,9 @@ export default function Plans() {
           {/* Header with Create Button */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Meal Plans</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Meal Plans
+              </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
                 Create and manage your meal planning schedules
               </p>
@@ -239,9 +253,12 @@ export default function Plans() {
                       Description
                     </label>
                     <textarea
-                      value={formData.description || ''}
+                      value={formData.note || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
+                        setFormData({
+                          ...formData,
+                          note: e.target.value,
+                        })
                       }
                       placeholder="Add notes about your plan..."
                       rows={2}
@@ -255,10 +272,15 @@ export default function Plans() {
                       Goal
                     </label>
                     <Input
-                      type="text"
-                      value={formData.goal || ''}
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={formData.targetCalories || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, goal: e.target.value })
+                        setFormData({
+                          ...formData,
+                          targetCalories: +e.target.value,
+                        })
                       }
                       placeholder="e.g., Lose weight, Build muscle, Maintain health"
                     />
@@ -298,7 +320,10 @@ export default function Plans() {
                       id="isActive"
                       checked={formData.isActive ?? true}
                       onCheckedChange={(checked) =>
-                        setFormData({ ...formData, isActive: checked as boolean })
+                        setFormData({
+                          ...formData,
+                          isActive: checked as boolean,
+                        })
                       }
                     />
                     <label
@@ -322,12 +347,8 @@ export default function Plans() {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1"
-                    >
-                      {loading ? 'Creating...' : 'Create Plan'}
+                    <Button type="submit" disabled={loading} className="flex-1">
+                      {loading ? "Creating..." : "Create Plan"}
                     </Button>
                   </div>
                 </form>
@@ -361,8 +382,8 @@ export default function Plans() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {plans.map((plan) => (
-                <Card 
-                  key={plan.id} 
+                <Card
+                  key={plan.id}
                   className="flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => navigate(`/plans/${plan.id}`)}
                 >
@@ -370,47 +391,51 @@ export default function Plans() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <CardTitle className="truncate">{plan.name}</CardTitle>
-                        {plan.description && (
+                        {plan.note && (
                           <CardDescription className="line-clamp-2 mt-1">
-                            {plan.description}
+                            {plan.note}
                           </CardDescription>
                         )}
-                        {plan.goal && (
+                        {plan.targetCalories && (
                           <div className="text-sm text-primary font-medium mt-2">
-                            🎯 {plan.goal}
+                            🎯 {plan.targetCalories}
                           </div>
                         )}
                       </div>
                       {getStatusBadge(plan)}
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="flex-1 space-y-4">
                     {/* Dates */}
                     <div className="space-y-2 p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 flex-shrink-0 text-green-600 dark:text-green-400" />
                         <span className="text-gray-700 dark:text-gray-300">
-                          {new Date(plan.startDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
+                          {new Date(plan.startDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 flex-shrink-0 text-red-600 dark:text-red-400" />
                         <span className="text-gray-700 dark:text-gray-300">
-                          {new Date(plan.endDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
+                          {new Date(plan.endDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
                           })}
                         </span>
                       </div>
                       <div className="pt-2 border-t border-border">
                         <span className="text-xs font-semibold text-muted-foreground">
-                          {Math.max(0, getDaysUntilEnd(plan.endDate))} days remaining
+                          {Math.max(0, getDaysUntilEnd(plan.endDate))} days
+                          remaining
                         </span>
                       </div>
                     </div>
@@ -424,7 +449,7 @@ export default function Plans() {
                         className="flex-1"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        {plan.isActive ? 'Active' : 'Inactive'}
+                        {plan.isActive ? "Active" : "Inactive"}
                       </Button>
                       <Button
                         onClick={() => handleDeletePlan(plan.id)}

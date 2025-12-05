@@ -49,7 +49,7 @@ export interface UserProfile {
   height: number;
   weight: number;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   bmi: number;
   bmiCategory: string;
   dailyCalorieGoal: number;
@@ -60,7 +60,7 @@ export interface CreateUserProfileRequest {
   height: number;
   weight: number;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   dailyCalorieGoal: number;
 }
 
@@ -68,7 +68,7 @@ export interface UpdateUserProfileRequest {
   height?: number;
   weight?: number;
   age?: number;
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   dailyCalorieGoal?: number;
 }
 
@@ -111,12 +111,15 @@ export interface MealPlan {
   meal?: MealResponse;
 }
 
-
 export interface CreateMealPlanRequest {
-  mealId: number;
-  date: string;
-  mealType: string;
-  servings: number;
+  name: string;
+  userId: number;
+  targetCalories?: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  planType: PlanType;
+  isActive: boolean;
 }
 
 export interface UpdateMealPlanRequest {
@@ -124,26 +127,32 @@ export interface UpdateMealPlanRequest {
   completed?: boolean;
 }
 
-export interface MealPlanTemplate {
+// Meal Plan
+export enum PlanType {
+  WEEKLY,
+  MONTHLY,
+}
+
+export interface MealPlanRequest {
+  userId?: number;
+}
+
+export interface MealPlanResponse {
   id: number;
   userId: number;
   name: string;
-  description?: string;
-  goal?: string;
+  note?: string;
+  targetCalories?: number;
   startDate: string;
   endDate: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  planType: PlanType;
 }
 
-export interface CreateMealPlanTemplateRequest {
-  name: string;
-  description?: string;
-  goal?: string;
-  startDate: string;
-  endDate: string;
-  isActive?: boolean;
+export interface PaginatedMealPlans {
+  content: MealPlanResponse[];
 }
 
 export interface UpdateMealPlanTemplateRequest {
