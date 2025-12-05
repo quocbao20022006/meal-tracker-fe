@@ -70,30 +70,30 @@ export default function MealDetail() {
     }
   }, [checkedList, id]);
 
-  const toggleCheck = (index: number) => {
-    setCheckedList(prev => {
-      const newList = [...prev];
-      newList[index] = !newList[index];
-      return newList;
-    });
-  };
+//   const toggleCheck = (index: number) => {
+//     setCheckedList(prev => {
+//       const newList = [...prev];
+//       newList[index] = !newList[index];
+//       return newList;
+//     });
+//   };
 
-  // Add to meal plan
-  const addToTodaysPlan = async () => {
-    if (!meal) return;
-    setAdding(true);
+//   // Add to meal plan
+//   const addToTodaysPlan = async () => {
+//     if (!meal) return;
+//     setAdding(true);
 
-    const today = new Date().toISOString().split("T")[0];
+//     const today = new Date().toISOString().split("T")[0];
 
-    await createMealPlan({
-      mealId: meal.id,
-      date: today,
-      category: meal.category_name[0] ?? "mainCourse",
-      servings: 1,
-    });
+//     await createMealPlan({
+//       mealId: meal.id,
+//       date: today,
+//       category: meal.category_name[0] ?? "mainCourse",
+//       servings: 1,
+//     });
 
-    setAdding(false);
-  };
+//     setAdding(false);
+//   };
 
   if (loading)
   return (
@@ -227,37 +227,37 @@ export default function MealDetail() {
             Edit recipe
           </button>
           
-          {/* Add to Today */}
-          <button
-            onClick={addToTodaysPlan}
-            disabled={adding}
-            className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            {adding ? "Adding..." : "Add to Today's Plan"}
-          </button>
+//           {/* Add to Today */}
+//           <button
+//             onClick={addToTodaysPlan}
+//             disabled={adding}
+//             className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+//           >
+//             <Plus className="w-5 h-5" />
+//             {adding ? "Adding..." : "Add to Today's Plan"}
+//           </button>
 
-          {/* Nutrition */}
-          <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <Salad className="w-6 h-6 text-emerald-500" />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Nutritions
-              </h2>
-            </div>
+//           {/* Nutrition */}
+//           <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
+//             <div className="flex items-center gap-3 mb-5">
+//               <Salad className="w-6 h-6 text-emerald-500" />
+//               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+//                 Nutritions
+//               </h2>
+//             </div>
 
-            <div className="flex flex-wrap gap-3">
-              {meal.nutrition.map((item, index) => (
-                <span
-                  key={index}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
-                            text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
+//             <div className="flex flex-wrap gap-3">
+//               {meal.nutrition.map((item, index) => (
+//                 <span
+//                   key={index}
+//                   className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
+//                             text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
+//                 >
+//                   {item}
+//                 </span>
+//               ))}
+//             </div>
+//           </div>
 
           {/* Similar recipes */}
           <SimilarRecipes

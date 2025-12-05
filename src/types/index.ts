@@ -18,6 +18,31 @@ export interface SignupRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+export interface OtpResponse {
+  message: string;
+  status: string;
+}
+
+export interface PasswordResetResponse {
+  message: string;
+  status: string;
+}
+
 export interface UserProfile {
   id: number;
   userId: number;
@@ -112,6 +137,37 @@ export interface UpdateMealRequest {
   servings: number;
   nutrition?: string[];
   category_name?: string[];
+}
+
+export interface MealPlanTemplate {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  goal?: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMealPlanTemplateRequest {
+  name: string;
+  description?: string;
+  goal?: string;
+  startDate: string;
+  endDate: string;
+  isActive?: boolean;
+}
+
+export interface UpdateMealPlanTemplateRequest {
+  name?: string;
+  description?: string;
+  goal?: string;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
 }
 
 export interface ApiError {

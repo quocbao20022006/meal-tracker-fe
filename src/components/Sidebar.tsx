@@ -1,4 +1,4 @@
-import { Home, Utensils, History, BookOpen, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { Home, Utensils, History, BookOpen, Calendar, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -21,8 +21,9 @@ export default function Sidebar() {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
     { id: 'meals', label: 'Meals', icon: Utensils, path: '/meals' },
-    { id: 'history', label: 'History', icon: History, path: '/history' },
     { id: 'planner', label: 'Planner', icon: BookOpen, path: '/planner' },
+    { id: 'plans', label: 'Plans', icon: Calendar, path: '/plans' },
+    { id: 'history', label: 'History', icon: History, path: '/history' },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];

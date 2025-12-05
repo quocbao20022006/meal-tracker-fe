@@ -2,11 +2,16 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+import VerifyOtp from '../pages/VerifyOtp';
+import ResetPassword from '../pages/ResetPassword';
 import Onboarding from '../pages/Onboarding';
 import Dashboard from '../pages/Dashboard';
 import Meals from '../pages/Meals';
 import MealDetail from '../pages/MealDetail';
 import Planner from '../pages/Planner';
+import Plans from '../pages/Plans';
+import PlanDetail from '../pages/PlanDetail';
 import HistoryPage from '../pages/History';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
@@ -23,18 +28,11 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route
-          path="/login"
-          element={
-            <Login />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <Register />
-          }
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -60,6 +58,8 @@ function AppRoutes() {
         <Route path="/meals" element={<Meals />} />
         <Route path="/meal/:id" element={<MealDetail />} />
         <Route path="/planner" element={<Planner />} />
+        <Route path="/plans" element={<Plans />} />
+        <Route path="/plans/:planId" element={<PlanDetail />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />

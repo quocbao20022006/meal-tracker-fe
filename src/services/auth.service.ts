@@ -3,6 +3,11 @@ import {
   AuthResponse,
   LoginRequest,
   SignupRequest,
+  ForgotPasswordRequest,
+  VerifyOtpRequest,
+  ResetPasswordRequest,
+  OtpResponse,
+  PasswordResetResponse,
 } from '../types';
 
 export const login = async (request: LoginRequest) => {
@@ -37,4 +42,16 @@ export const getToken = () => {
 
 export const isAuthenticated = () => {
   return !!httpClient.getToken();
+};
+
+export const forgotPassword = async (request: ForgotPasswordRequest) => {
+  return httpClient.post<OtpResponse>('/v1/auth/forgot-password', request);
+};
+
+export const verifyOtp = async (request: VerifyOtpRequest) => {
+  return httpClient.post<OtpResponse>('/v1/auth/verify-otp', request);
+};
+
+export const resetPassword = async (request: ResetPasswordRequest) => {
+  return httpClient.post<PasswordResetResponse>('/v1/auth/reset-password', request);
 };
