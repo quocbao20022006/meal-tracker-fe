@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { IngredientResponse, MealResponse, UpdateMealRequest } from "../types";
 import { X, Plus, Trash } from "lucide-react";
-import { getAllIngredients } from "../services/ingredient.service";
 import { updateMeal } from "../services/meal.service";
 import AutocompleteIngredientInput from "./AutocompleteIngredientInput";
 
@@ -19,10 +18,12 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
     const [form, setForm] = useState<UpdateMealRequest>({
       meal_name: meal.meal_name,
       image: null, // chưa có ảnh mới
-      meal_ingredients: meal.meal_ingredients.map(ing => ({
-        ingredient_id: ing.id,
-        quantity: ing.quantity
-      })),
+      meal_ingredients: meal.meal_ingredients
+        .filter(ing => ing && ing.id) // Chỉ lấy ingredients có id hợp lệ
+        .map(ing => ({
+          ingredient_id: ing.id || 0,
+          quantity: ing.quantity || 0
+        })),
       meal_instructions: Array.isArray(meal.meal_instructions)
         ? meal.meal_instructions.map(ins => ({
             step: ins.step,
@@ -33,32 +34,39 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
       servings: meal.servings || 1
     });
 
-    const [allIngredients, setAllIngredients] = useState<IngredientResponse[]>([]);
     const [loading, setLoading] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    // Map để lưu ingredient names theo index để hiển thị
+    const [ingredientNames, setIngredientNames] = useState<Map<number, string>>(new Map());
 
     const handleIngredientChange = (
       index: number, 
-      key: "ingredient_name" | "quantity", 
-      value: string | number, 
-      calories?: number
+      ingredient: IngredientResponse
     ) => {
       setForm(prev => {
         const arr = [...prev.meal_ingredients];
-        if (key === "ingredient_name" && typeof value === "string") {
-          arr[index].ingredient_name = value;
-          if (calories != undefined) arr[index].calories = calories;
-        }
-        if (key === "quantity") {
-          arr[index].quantity = Number(value);
-        }
+        arr[index] = {
+          ingredient_id: ingredient.id,
+          quantity: arr[index]?.quantity || 0
+        };
         return { ...prev, meal_ingredients: arr };
+      });
+      // Cập nhật ingredient name để hiển thị
+      setIngredientNames(prev => {
+        const newMap = new Map(prev);
+        newMap.set(index, ingredient.name);
+        return newMap;
       });
     };
 
     const handleInstructionChange = (index: number, key: InstructionKey, value: string) => {
       setForm(prev => {
         const arr = [...prev.meal_instructions];
-        arr[index].instruction = value;
+        if (key === "step") {
+          arr[index] = { ...arr[index], step: Number(value) || arr[index].step };
+        } else if (key === "instruction") {
+          arr[index] = { ...arr[index], instruction: value };
+        }
         return { ...prev, meal_instructions: arr };
       });
     };
@@ -66,7 +74,7 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
     const addIngredient = () => {
       setForm(prev => ({
         ...prev,
-        meal_ingredients: [...prev.meal_ingredients, { id: 0, ingredient_name: "", quantity: 0, calories: 0 }]
+        meal_ingredients: [...prev.meal_ingredients, { ingredient_id: 0, quantity: 0 }]
       }));
     };
 
@@ -124,42 +132,87 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
     const handleSave = async () => {
       try {
         setLoading(true);
-        // 1. cập nhật UI trước
+        
+        // Validate: đảm bảo tất cả ingredients có ingredient_id
+        const validIngredients = form.meal_ingredients.filter(ing => ing.ingredient_id > 0);
+        if (validIngredients.length !== form.meal_ingredients.length) {
+          alert("Please select all ingredients before saving!");
+          setLoading(false);
+          return;
+        }
+        
+        // Gọi API lưu xuống backend
+        const result = await updateMeal(meal.id, form);
+        
+        // Kiểm tra error từ response
+        if (result.error) {
+          console.error("Update error:", result.error);
+          return;
+        }
+
+        if (!result.data) {
+          console.error("No data returned from API");
+          return;
+        }
+
+        // Cập nhật UI sau khi API thành công
         onUpdate(form);
-
-        // 2. gọi API lưu xuống backend
-        await updateMeal(meal.id, form);
-
-        alert("Meal updated!");
         onClose();
       } catch (err) {
-        console.error(err);
-        alert("Update failed");
+        console.error("Unexpected error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    useEffect(() => {
-    const fetchIngredients = async () => {
-        try {
-        const res = await getAllIngredients();
-        console.log("ingredients response.data:", res.data);
-        const data = res.data;
-        setAllIngredients(Array.isArray(data?.content) ? data.content : []);
-        } catch (err) {
-        console.error(err);
-        }
-    };
-    fetchIngredients();
-    }, []);
 
     useEffect(() => {
-      if (isOpen) {
+      if (isOpen && meal) {
         setLoading(false);  // mở modal thì đảm bảo không bị block bởi loading
         setMealForm({ ...meal }); // reset lại form từ meal gốc mỗi lần mở
+        setImagePreview(null); // reset preview khi mở modal
+        
+        // Reset form với dữ liệu từ meal
+        setForm({
+          meal_name: meal.meal_name,
+          image: null,
+          meal_ingredients: meal.meal_ingredients
+            .filter(ing => ing && ing.id) // Chỉ lấy ingredients có id hợp lệ
+            .map(ing => ({
+              ingredient_id: ing.id || 0,
+              quantity: ing.quantity || 0
+            })),
+          meal_instructions: Array.isArray(meal.meal_instructions)
+            ? meal.meal_instructions.map(ins => ({
+                step: ins.step,
+                instruction: ins.instruction
+              }))
+            : [],
+          cooking_time: meal.cooking_time || "",
+          servings: meal.servings || 1
+        });
+        
+        // Reset ingredient names khi mở modal
+        const nameMap = new Map<number, string>();
+        if (Array.isArray(meal.meal_ingredients) && meal.meal_ingredients.length > 0) {
+          meal.meal_ingredients.forEach((ing, index) => {
+            if (ing && ing.ingredient_name) {
+              nameMap.set(index, ing.ingredient_name);
+            }
+          });
+        }
+        setIngredientNames(nameMap);
       }
     }, [isOpen, meal]);
+
+    // Cleanup preview URL khi component unmount hoặc khi file thay đổi
+    useEffect(() => {
+      return () => {
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+        }
+      };
+    }, [imagePreview]);
 
     if (!isOpen) return null;
 
@@ -229,33 +282,44 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
           
           {/* Meal image */}
           <div className="flex-1 flex flex-col gap-2">
-            <label className="font-medium text-gray-700 dark:text-gray-200">Image URL</label>
+            <label className="font-medium text-gray-700 dark:text-gray-200">Meal Image</label>
             
             {/* Preview image */}
-            {mealForm.image_url && (
+            {(imagePreview || mealForm.image_url) && (
                 <img
-                src={mealForm.image_url}
+                src={imagePreview || mealForm.image_url || ""}
                 alt="Meal"
                 className="w-full h-64 object-cover rounded-lg mb-2"
                 />
             )}
 
-            <input
-                type="file"
-                // accept="image/*"
-                onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                    // reader.result là base64 string
-                    setForm(prev => ({ ...prev, image_url: reader.result as string }));
-                    };
-                    reader.readAsDataURL(file);
-                }
-                }}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200"
-            />
+            <div className="relative">
+              <input
+                  type="file"
+                  accept="image/*"
+                  id="meal-image-input"
+                  onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                      // Lưu File object vào form state
+                      setForm(prev => ({ ...prev, image: file }));
+                      // Cleanup preview URL cũ nếu có
+                      if (imagePreview) {
+                          URL.revokeObjectURL(imagePreview);
+                      }
+                      // Tạo preview URL từ File object
+                      const previewUrl = URL.createObjectURL(file);
+                      setImagePreview(previewUrl);
+                  }
+                  }}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900 dark:file:text-emerald-300"
+              />
+            </div>
+            {form.image && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Selected: {form.image.name}
+              </p>
+            )}
           </div>
         </div>
 
@@ -266,20 +330,33 @@ export default function EditMealModal({ meal, isOpen, onClose, onUpdate }: EditM
                 {form.meal_ingredients.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
                     <AutocompleteIngredientInput
-                        value={"text"}
-                        onSelect={(ing) => handleIngredientChange(index, "ingredient_name", ing.name, ing.calories)}
-                        // placeholder={item.ingredient_id || "Type ingredient..."}
+                        value={ingredientNames.get(index) || ""}
+                        onSelect={(ing) => handleIngredientChange(index, ing)}
+                        placeholder="Type ingredient..."
                     />
 
                     <input
-                    type="text"
+                    type="number"
                     placeholder="0"
                     className="w-24 p-2 rounded-lg border border-gray-300 dark:border-gray-600"
                     value={item.quantity}
-                    onChange={(e) => handleIngredientChange(index, "quantity", e.target.value)}
+                    onChange={(e) => {
+                      setForm(prev => {
+                        const arr = [...prev.meal_ingredients];
+                        arr[index] = { ...arr[index], quantity: Number(e.target.value) || 0 };
+                        return { ...prev, meal_ingredients: arr };
+                      });
+                    }}
                     />
 
-                    <button onClick={() => removeIngredient(index)} className="text-red-500">
+                    <button onClick={() => {
+                      removeIngredient(index);
+                      setIngredientNames(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(index);
+                        return newMap;
+                      });
+                    }} className="text-red-500">
                     <Trash />
                     </button>
                 </div>

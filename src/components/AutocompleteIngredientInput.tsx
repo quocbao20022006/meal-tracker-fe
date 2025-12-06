@@ -23,6 +23,11 @@ export default function AutocompleteIngredientInput({
   
   const isDefault = placeholder === "Type ingredient...";
 
+  // Sync query state with value prop when it changes
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
   // Fetch suggestions with debounce
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);

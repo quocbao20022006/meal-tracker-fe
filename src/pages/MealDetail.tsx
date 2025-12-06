@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Salad, Plus, Clock, User, BatteryCharging } from "lucide-react";
+import {
+  ArrowLeft,
+  Salad,
+  Plus,
+  Clock,
+  User,
+  BatteryCharging,
+} from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMealPlans } from "../hooks/useMealPlans";
 import { MealResponse } from "../types";
@@ -70,44 +77,44 @@ export default function MealDetail() {
     }
   }, [checkedList, id]);
 
-//   const toggleCheck = (index: number) => {
-//     setCheckedList(prev => {
-//       const newList = [...prev];
-//       newList[index] = !newList[index];
-//       return newList;
-//     });
-//   };
+  const toggleCheck = (index: number) => {
+    setCheckedList((prev) => {
+      const newList = [...prev];
+      newList[index] = !newList[index];
+      return newList;
+    });
+  };
 
-//   // Add to meal plan
-//   const addToTodaysPlan = async () => {
-//     if (!meal) return;
-//     setAdding(true);
+  // Add to meal plan
+  const addToTodaysPlan = async () => {
+    if (!meal) return;
+    setAdding(true);
 
-//     const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
 
-//     await createMealPlan({
-//       mealId: meal.id,
-//       date: today,
-//       category: meal.category_name[0] ?? "mainCourse",
-//       servings: 1,
-//     });
+    await createMealPlan({
+      mealId: meal.id,
+      date: today,
+      category: meal.category_name[0] ?? "mainCourse",
+      servings: 1,
+    });
 
-//     setAdding(false);
-//   };
+    setAdding(false);
+  };
 
   if (loading)
-  return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
-    </div>
-  );
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
 
   if (!meal)
-  return (
-    <div className="flex-1 flex items-center justify-center">
-      <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
-    </div>
-  );
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Meal not found</p>
+      </div>
+    );
 
   return (
     <div className="flex-1 flex flex-col">
@@ -128,27 +135,35 @@ export default function MealDetail() {
           {/* Meal info */}
           <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
             <div className="w-1/3">
-              <img src={meal.image_url ?? ""} alt="" className="w-full h-[340px] rounded-2xl object-cover" />
+              <img
+                src={meal.image_url ?? ""}
+                alt=""
+                className="w-full h-[340px] rounded-2xl object-cover"
+              />
             </div>
             <div className="w-2/3 flex flex-col justify-between">
-              <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">{meal.meal_name}</h1>
+              <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">
+                {meal.meal_name}
+              </h1>
               <p className="mb-5 dark:text-white">{meal.meal_description}</p>
-              <div className="flex gap-10 mb-5 text-gray-900 dark:text-white">
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <Clock className="w-5" />
-                  <span className="">Cooking time: {meal.cooking_time}</span>
-                </div>
+              <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
+                <Clock className="w-5" />
+                <span className="">Cooking time: {meal.cooking_time}</span>
+              </div>
+              <div className="flex justify-between gap-5 mb-5 text-gray-900 dark:text-white">
                 <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
                   <User className="w-5" />
                   <span>Servings: {meal.servings}</span>
                 </div>
                 <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
                   <BatteryCharging className="w-5" />
-                  <span>Total calories: {meal.calories}</span>
+                  <span>Total calories: {meal.calories} Kcal</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-gray-900 dark:text-white">Categories: </span>
+                <span className="text-gray-900 dark:text-white">
+                  Categories:{" "}
+                </span>
                 {meal.category_name.map((cat) => (
                   <span
                     key={cat}
@@ -160,12 +175,14 @@ export default function MealDetail() {
               </div>
             </div>
           </div>
-        
+
           {/* Meal ingredients & instructions */}
           <div className="flex items-start gap-10">
             {/* Ingredients */}
             <div className="w-1/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Ingredients</h2>
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">
+                Ingredients
+              </h2>
               <div className="flex flex-col gap-3">
                 {meal.meal_ingredients.map((item, index) => (
                   <label
@@ -178,7 +195,11 @@ export default function MealDetail() {
                       checked={checkedList[index]}
                       onChange={() => toggleCheck(index)}
                     />
-                    <span className={`transition ${checkedList[index] ? "line-through opacity-60" : ""}`}>
+                    <span
+                      className={`transition ${
+                        checkedList[index] ? "line-through opacity-60" : ""
+                      }`}
+                    >
                       {item.ingredient_name} — {item.quantity}
                     </span>
                   </label>
@@ -188,7 +209,9 @@ export default function MealDetail() {
 
             {/* Instructions */}
             <div className="w-2/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Instructions</h2>
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">
+                Instructions
+              </h2>
               {meal?.meal_instructions?.length ? (
                 meal.meal_instructions.map((s) => (
                   <div key={s.step} className="flex gap-3 items-start">
@@ -201,7 +224,9 @@ export default function MealDetail() {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-600 dark:text-gray-400">No instructions available</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  No instructions available
+                </p>
               )}
             </div>
           </div>
@@ -216,7 +241,6 @@ export default function MealDetail() {
             onUpdate={(updated) => setMeal(updated)}
             isOpen={editing}
           />
-
           {/* Edit recipe */}
           <button
             onClick={() => setEditing(true)}
@@ -226,43 +250,42 @@ export default function MealDetail() {
             <Plus className="w-5 h-5" />
             Edit recipe
           </button>
-          
-//           {/* Add to Today */}
-//           <button
-//             onClick={addToTodaysPlan}
-//             disabled={adding}
-//             className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-//           >
-//             <Plus className="w-5 h-5" />
-//             {adding ? "Adding..." : "Add to Today's Plan"}
-//           </button>
 
-//           {/* Nutrition */}
-//           <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
-//             <div className="flex items-center gap-3 mb-5">
-//               <Salad className="w-6 h-6 text-emerald-500" />
-//               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-//                 Nutritions
-//               </h2>
-//             </div>
+          {/* Add to Today */}
+          <button
+            onClick={addToTodaysPlan}
+            disabled={adding}
+            className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            {adding ? "Adding..." : "Add to Today's Plan"}
+          </button>
 
-//             <div className="flex flex-wrap gap-3">
-//               {meal.nutrition.map((item, index) => (
-//                 <span
-//                   key={index}
-//                   className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
-//                             text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
-//                 >
-//                   {item}
-//                 </span>
-//               ))}
-//             </div>
-//           </div>
+          {/* Nutrition */}
+          <div className="p-6 mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-emerald-400 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <Salad className="w-6 h-6 text-emerald-500" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Nutritions
+              </h2>
+            </div>
 
+            <div className="flex flex-wrap gap-3">
+              {meal.nutrition.map((item, index) => (
+                <span
+                  key={index}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30
+                            text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
           {/* Similar recipes */}
           <SimilarRecipes
-              recipes={similarMeals}
-              onSelect={(id) => navigate(`/meal/${id}`)}
+            recipes={similarMeals}
+            onSelect={(id) => navigate(`/meal/${id}`)}
           />
         </div>
       </div>

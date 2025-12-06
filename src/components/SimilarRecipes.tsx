@@ -18,14 +18,16 @@ export default function SimilarRecipes({ recipes, onSelect }: SimilarRecipesProp
           <div
             key={meal.id}
             onClick={() => onSelect?.(meal.id.toString())}
-            className="flex items-center gap-5 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-all cursor-pointer p-4 border border-transparent hover:border-emerald-400"
+            className="flex flex-col items-center bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-all cursor-pointer p-4 border border-transparent hover:border-emerald-400"
           >
             {/* Image  */}
-            <img
-              src={meal.image_url}
-              alt={meal.meal_name}
-              className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
-            />
+            <div className="w-full h-48 mb-2 overflow-hidden rounded-xl">
+              <img
+                src={meal.image_url}
+                alt={meal.meal_name}
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
 
             {/* Info */}
             <div className="flex-1">
@@ -36,9 +38,6 @@ export default function SimilarRecipes({ recipes, onSelect }: SimilarRecipesProp
                 {meal.meal_description}
               </p>
             </div>
-
-            {/* Optional arrow icon */}
-            <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-600" />
           </div>
         ))}
 

@@ -1,5 +1,4 @@
 import * as httpClient from '../lib/http-client';
-import axios from "axios";
 import { MealResponse, PaginatedMeals, UpdateMealRequest } from '../types';
 
 export const getAllMeals = async (page: number = 0) => {
@@ -29,18 +28,34 @@ export const createMeal = async (meal: Omit<MealResponse, 'id'>) => {
 export const updateMeal = async (id: number, meal: UpdateMealRequest) => {
   const formData = new FormData();
 
-  // Append image nếu có
-  if (meal.image instanceof File) {
-    formData.append("image", meal.image);
+  // Tên field phải camelCase đúng với Java class
+  formData.append("mealName", meal.meal_name ?? "");
+  formData.append("mealDescription", meal.meal_description ?? "");
+  formData.append("cookingTime", meal.cooking_time ?? "");
+  formData.append("servings", String(meal.servings ?? 1));
+
+  (meal.meal_ingredients ?? []).forEach((ing, idx) => {
+    formData.append(`mealIngredients[${idx}].ingredientId`, String(ing.ingredient_id ?? ""));
+    formData.append(`mealIngredients[${idx}].quantity`, String(ing.quantity ?? ""));
+  });
+
+  (meal.meal_instructions ?? []).forEach((ins, idx) => {
+    formData.append(`mealInstructions[${idx}].step`, String(ins.step ?? ""));
+    formData.append(`mealInstructions[${idx}].instruction`, ins.instruction ?? "");
+  });
+
+  (meal.nutrition ?? []).forEach((item, idx) => {
+    formData.append(`nutrition[${idx}]`, item);
+  });
+  (meal.category_name ?? []).forEach((item, idx) => {
+    formData.append(`categoryName[${idx}]`, item);
+  });
+
+  if (meal.image instanceof File && meal.image.size > 0) {
+    formData.append("image", meal.image, meal.image.name);
   }
 
-  // Append phần data JSON
-  const { image, ...mealData } = meal;
-  formData.append("data", new Blob([JSON.stringify(mealData)], { type: "application/json" }));
-
-  return httpClient.put<MealResponse>(`/meal/update/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return httpClient.put<MealResponse>(`/meal/update/${id}`, formData);
 };
 
 export const deleteMeal = async (id: number) => {
