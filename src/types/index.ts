@@ -123,8 +123,13 @@ export interface CreateMealPlanRequest {
 }
 
 export interface UpdateMealPlanRequest {
-  servings?: number;
-  completed?: boolean;
+  name: string;
+  targetCalories?: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  isActive: boolean;
+  planType: PlanType;
 }
 
 // Meal Plan
