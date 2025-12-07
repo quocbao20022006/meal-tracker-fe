@@ -65,8 +65,8 @@ export default function MealDetail() {
     const saved = localStorage.getItem(`meal-checklist-${id}`);
     if (saved) {
       setCheckedList(JSON.parse(saved));
-    } else if (meal?.meal_ingredients) {
-      setCheckedList(new Array(meal.meal_ingredients.length).fill(false));
+    } else if (meal?.mealIngredients) {
+      setCheckedList(new Array(meal.mealIngredients.length).fill(false));
     }
   }, [id, meal]);
 
@@ -95,7 +95,7 @@ export default function MealDetail() {
     await createMealPlan({
       mealId: meal.id,
       date: today,
-      category: meal.category_name[0] ?? "mainCourse",
+      category: meal.categoryName[0] ?? "mainCourse",
       servings: 1,
     });
 
@@ -136,19 +136,19 @@ export default function MealDetail() {
           <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
             <div className="w-1/3">
               <img
-                src={meal.image_url ?? ""}
+                src={meal.imageUrl ?? ""}
                 alt=""
                 className="w-full h-[340px] rounded-2xl object-cover"
               />
             </div>
             <div className="w-2/3 flex flex-col justify-between">
               <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">
-                {meal.meal_name}
+                {meal.name}
               </h1>
-              <p className="mb-5 dark:text-white">{meal.meal_description}</p>
+              <p className="mb-5 dark:text-white">{meal.description}</p>
               <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
                 <Clock className="w-5" />
-                <span className="">Cooking time: {meal.cooking_time}</span>
+                <span className="">Cooking time: {meal.cookingTime}</span>
               </div>
               <div className="flex justify-between gap-5 mb-5 text-gray-900 dark:text-white">
                 <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
@@ -164,7 +164,7 @@ export default function MealDetail() {
                 <span className="text-gray-900 dark:text-white">
                   Categories:{" "}
                 </span>
-                {meal.category_name.map((cat) => (
+                {meal.categoryName?.map((cat) => (
                   <span
                     key={cat}
                     className="px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize"
@@ -184,7 +184,7 @@ export default function MealDetail() {
                 Ingredients
               </h2>
               <div className="flex flex-col gap-3">
-                {meal.meal_ingredients.map((item, index) => (
+                {meal.mealIngredients.map((item, index) => (
                   <label
                     key={index}
                     className="flex items-center gap-3 cursor-pointer text-gray-700 dark:text-gray-200"
@@ -200,7 +200,7 @@ export default function MealDetail() {
                         checkedList[index] ? "line-through opacity-60" : ""
                       }`}
                     >
-                      {item.ingredient_name} — {item.quantity}
+                      {item.ingredientName} — {item.quantity} {item.unit || ""}
                     </span>
                   </label>
                 ))}
@@ -212,8 +212,8 @@ export default function MealDetail() {
               <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">
                 Instructions
               </h2>
-              {meal?.meal_instructions?.length ? (
-                meal.meal_instructions.map((s) => (
+              {meal?.mealInstructions?.length ? (
+                meal.mealInstructions.map((s) => (
                   <div key={s.step} className="flex gap-3 items-start">
                     <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">
                       {s.step}
@@ -271,7 +271,7 @@ export default function MealDetail() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              {meal.nutrition.map((item, index) => (
+              {meal.nutrition?.map((item, index) => (
                 <span
                   key={index}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30

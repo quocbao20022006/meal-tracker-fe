@@ -29,17 +29,17 @@ export const updateMeal = async (id: number, meal: UpdateMealRequest) => {
   const formData = new FormData();
 
   // Tên field phải camelCase đúng với Java class
-  formData.append("mealName", meal.meal_name ?? "");
-  formData.append("mealDescription", meal.meal_description ?? "");
-  formData.append("cookingTime", meal.cooking_time ?? "");
+  formData.append("mealName", meal.mealName ?? "");
+  formData.append("mealDescription", meal.mealDescription ?? "");
+  formData.append("cookingTime", meal.cookingTime ?? "");
   formData.append("servings", String(meal.servings ?? 1));
 
-  (meal.meal_ingredients ?? []).forEach((ing, idx) => {
-    formData.append(`mealIngredients[${idx}].ingredientId`, String(ing.ingredient_id ?? ""));
+  (meal.mealIngredients ?? []).forEach((ing, idx) => {
+    formData.append(`mealIngredients[${idx}].ingredientId`, String(ing.ingredientId ?? ""));
     formData.append(`mealIngredients[${idx}].quantity`, String(ing.quantity ?? ""));
   });
 
-  (meal.meal_instructions ?? []).forEach((ins, idx) => {
+  (meal.mealInstructions ?? []).forEach((ins, idx) => {
     formData.append(`mealInstructions[${idx}].step`, String(ins.step ?? ""));
     formData.append(`mealInstructions[${idx}].instruction`, ins.instruction ?? "");
   });
@@ -47,7 +47,7 @@ export const updateMeal = async (id: number, meal: UpdateMealRequest) => {
   (meal.nutrition ?? []).forEach((item, idx) => {
     formData.append(`nutrition[${idx}]`, item);
   });
-  (meal.category_name ?? []).forEach((item, idx) => {
+  (meal.categoryName ?? []).forEach((item, idx) => {
     formData.append(`categoryName[${idx}]`, item);
   });
 

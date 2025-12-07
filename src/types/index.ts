@@ -74,24 +74,25 @@ export interface UpdateUserProfileRequest {
 
 export interface MealResponse {
   id: number;
-  meal_name: string;
-  meal_description: string | null;
-  image_url: string | null;
-  meal_ingredients: {
-    id: number;
-    ingredient_name: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  mealIngredients: {
+    ingredientId: number;
+    ingredientName: string;
     quantity: number;
-    calories: number;
+    description?: string;
+    unit?: string;
   }[];
-  meal_instructions: {
+  mealInstructions: {
     step: number;
     instruction: string;
   }[];
-  cooking_time: string;
+  cookingTime: string;
   calories: number;
   servings: number;
   nutrition: string[];
-  category_name: string[];
+  categoryName: string[];
 }
 
 export interface PaginatedMeals {
@@ -122,21 +123,22 @@ export interface CreateMealPlanRequest {
 }
 
 export interface UpdateMealRequest {
-  meal_name: string;
-  meal_description?: string | null;
+  mealName: string;
+  mealDescription?: string | null;
   image?: File | null; // image file, tương ứng với MultipartFile
-  meal_ingredients: {
-    ingredient_id: number;
+  mealIngredients: {
+    ingredientId: number;
     quantity: number;
+    unit?: string;
   }[];
-  meal_instructions: {
+  mealInstructions: {
     step: number;
     instruction: string;
   }[];
-  cooking_time: string;
+  cookingTime: string;
   servings: number;
   nutrition?: string[];
-  category_name?: string[];
+  categoryName?: string[];
 }
 
 export interface MealPlanTemplate {
