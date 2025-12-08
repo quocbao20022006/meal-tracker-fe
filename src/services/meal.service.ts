@@ -1,24 +1,29 @@
-import * as httpClient from '../lib/http-client';
-import { MealResponse, PaginatedMeals } from '../types';
+import * as httpClient from "../lib/http-client";
+import { MealResponse, PaginatedMeals } from "../types";
 
 export const getAllMeals = async (page: number = 0) => {
-  return httpClient.get<PaginatedMeals>('/meal/all?page=' + page);
+  return httpClient.get<PaginatedMeals>("/meal/all?page=" + page);
 };
 
 export const getMealById = async (id: number) => {
   return httpClient.get<MealResponse>(`/meal/${id}`);
 };
 
-export const getMealsByCategory = async (category: string, page: number = 0) => {
-  return httpClient.get<PaginatedMeals>(`/meal/filter?category=${category}&page=${page}`);
+export const getMealsByCategory = async (
+  category: string,
+  page: number = 0
+) => {
+  return httpClient.get<PaginatedMeals>(
+    `/meal/filter?category=${category}&page=${page}`
+  );
 };
 
-export const searchMeals = async (query: string) => {
-  return httpClient.get<MealResponse[]>(`/meal/search?query=${query}`);
+export const searchMeals = async (mealName: string) => {
+  return httpClient.get<PaginatedMeals>(`/meal/filter?mealName=${mealName}`);
 };
 
-export const createMeal = async (meal: Omit<MealResponse, 'id'>) => {
-  return httpClient.post<MealResponse>('/meals', meal);
+export const createMeal = async (meal: Omit<MealResponse, "id">) => {
+  return httpClient.post<MealResponse>("/meals", meal);
 };
 
 export const updateMeal = async (id: number, meal: Partial<MealResponse>) => {

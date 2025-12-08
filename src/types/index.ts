@@ -138,6 +138,21 @@ export enum PlanType {
   MONTHLY,
 }
 
+// Meal Type
+export enum MealType {
+  BREAKFAST = "BREAKFAST",
+  LUNCH = "LUNCH",
+  SNACK = "SNACK",
+  DINNER = "DINNER",
+}
+
+export const MEAL_TYPES: { [key: string]: string } = {
+  [MealType.BREAKFAST]: "Breakfast",
+  [MealType.DINNER]: "Dinner",
+  [MealType.LUNCH]: "Lunch",
+  [MealType.SNACK]: "Snack",
+};
+
 export interface MealPlanRequest {
   userId?: number;
 }
@@ -160,13 +175,30 @@ export interface PaginatedMealPlans {
   content: MealPlanResponse[];
 }
 
-export interface UpdateMealPlanTemplateRequest {
-  name?: string;
-  description?: string;
-  goal?: string;
-  startDate?: string;
-  endDate?: string;
-  isActive?: boolean;
+export interface MealPlanItemRequest {
+  date?: string;
+  mealPlanId?: number;
+}
+
+export interface PaginatedMealPlanItems {
+  content: MealPlanItemResponse[];
+}
+
+export interface MealPlanItemResponse {
+  id: number;
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
+  meal: MealResponse;
+  mealPlan: MealPlanResponse;
+}
+
+export interface CreateMealPlanItemRequest {
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
 }
 
 export interface ApiError {
