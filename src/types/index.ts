@@ -112,25 +112,25 @@ export type GoalType = keyof typeof GOAL_OPTIONS;
 
 export interface MealResponse {
   id: number;
-  meal_name: string;
-  meal_description: string | null;
-  image_url: string | null;
-  meal_ingredients: {
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  mealIngredients: {
     ingredientId: number;
     ingredientName: string;
     quantity: number;
     description?: string;
     unit?: string;
   }[];
-  meal_instructions: {
+  mealInstructions: {
     step: number;
     instruction: string;
   }[];
-  cooking_time: string;
+  cookingTime: string;
   calories: number;
   servings: number;
   nutrition: string[];
-  category_name: string[];
+  categoryName: string[];
 }
 
 export interface PaginatedMeals {

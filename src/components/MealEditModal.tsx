@@ -32,9 +32,9 @@ export default function EditMealModal({
       })),
     mealInstructions: Array.isArray(meal.mealInstructions)
       ? meal.mealInstructions.map((ins) => ({
-        step: ins.step,
-        instruction: ins.instruction,
-      }))
+          step: ins.step,
+          instruction: ins.instruction,
+        }))
       : [],
     cookingTime: meal.cookingTime || "",
     servings: meal.servings || 1,
@@ -96,8 +96,6 @@ export default function EditMealModal({
   //   }));
   // };
 
-
-
   // Khi mở modal, khởi tạo localIds từ dữ liệu cũ
   useEffect(() => {
     if (isOpen && meal) {
@@ -105,7 +103,7 @@ export default function EditMealModal({
 
       // Tạo localId cho các ingredient hiện có
       const localIds = meal.mealIngredients
-        .filter(ing => ing && ing.ingredientId)
+        .filter((ing) => ing && ing.ingredientId)
         .map((_, i) => Date.now() + i); // hoặc dùng crypto.randomUUID() nếu browser hỗ trợ
 
       setIngredientLocalIds(localIds);
@@ -252,9 +250,9 @@ export default function EditMealModal({
           })),
         mealInstructions: Array.isArray(meal.mealInstructions)
           ? meal.mealInstructions.map((ins) => ({
-            step: ins.step,
-            instruction: ins.instruction,
-          }))
+              step: ins.step,
+              instruction: ins.instruction,
+            }))
           : [],
         cookingTime: meal.cookingTime || "",
         servings: meal.servings || 1,
@@ -478,8 +476,10 @@ export default function EditMealModal({
                   <button
                     onClick={() => {
                       removeIngredient(index);
-                      setIngredientLocalIds(prev => prev.filter((_, i) => i !== index));
-                      setIngredientNames(prev => {
+                      setIngredientLocalIds((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
+                      setIngredientNames((prev) => {
                         const newMap = new Map(prev);
                         newMap.delete(index);
                         const reordered = new Map();
@@ -576,4 +576,3 @@ export default function EditMealModal({
     </div>
   );
 }
-
