@@ -20,7 +20,7 @@ export default function Onboarding() {
     height: '',
     weight: '',
     weightGoal: '',
-    birthDate: '', // Changed from age to birthDate
+    birthDate: '',
     gender: 'male' as 'male' | 'female' | 'other',
     activityLevel: 'moderate' as ActivityLevel,
     goal: 'maintain' as GoalType,

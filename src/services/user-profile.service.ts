@@ -118,44 +118,40 @@ export const getBMICategory = (bmi: number): string => {
   return 'Obese';
 };
 
-/**
- * Calculate daily calories using Harris-Benedict equation
- */
-export const calculateDailyCalories = (
-  weight: number,
-  height: number,
-  birthDate: string,
-  gender: string,
-  activityLevel: string = 'moderate',
-  goal: string = 'maintain'
-): number => {
-  const age = calculateAge(birthDate);
+//   weight: number,
+//   height: number,
+//   birthDate: string,
+//   gender: string,
+//   activityLevel: string = 'moderate',
+//   goal: string = 'maintain'
+// ): number => {
+//   const age = calculateAge(birthDate);
 
-  let bmr: number;
-  if (gender === 'male') {
-    bmr = 88.362 + 13.397 * weight + 4.799 * height - 5.677 * age;
-  } else {
-    bmr = 447.593 + 9.247 * weight + 3.098 * height - 4.33 * age;
-  }
+//   let bmr: number;
+//   if (gender === 'male') {
+//     bmr = 88.362 + 13.397 * weight + 4.799 * height - 5.677 * age;
+//   } else {
+//     bmr = 447.593 + 9.247 * weight + 3.098 * height - 4.33 * age;
+//   }
 
-  // Activity multiplier
-  const activityMultipliers: Record<string, number> = {
-    sedentary: 1.2,
-    light: 1.375,
-    moderate: 1.55,
-    active: 1.725,
-    very_active: 1.9,
-  };
+//   // Activity multiplier
+//   const activityMultipliers: Record<string, number> = {
+//     sedentary: 1.2,
+//     light: 1.375,
+//     moderate: 1.55,
+//     active: 1.725,
+//     very_active: 1.9,
+//   };
 
-  const tdee = bmr * (activityMultipliers[activityLevel] || 1.55);
+//   const tdee = bmr * (activityMultipliers[activityLevel] || 1.55);
 
-  // Adjust for goal
-  let dailyCalories = tdee;
-  if (goal === 'lose_weight') {
-    dailyCalories = tdee - 500; // Deficit 500 cal/day ≈ 0.5kg/week
-  } else if (goal === 'gain_weight') {
-    dailyCalories = tdee + 500; // Surplus 500 cal/day ≈ 0.5kg/week
-  }
+//   // Adjust for goal
+//   let dailyCalories = tdee;
+//   if (goal === 'lose_weight') {
+//     dailyCalories = tdee - 500; // Deficit 500 cal/day ≈ 0.5kg/week
+//   } else if (goal === 'gain_weight') {
+//     dailyCalories = tdee + 500; // Surplus 500 cal/day ≈ 0.5kg/week
+//   }
 
-  return Math.round(dailyCalories);
-};
+//   return Math.round(dailyCalories);
+// };
