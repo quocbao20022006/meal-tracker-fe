@@ -40,6 +40,17 @@ export default function MealCard({ meal, onViewMeal }: MealCardProps) {
             imgLoaded ? "opacity-100" : "opacity-0"
           }`}
         />
+
+        {/* CALORIES BADGE */}
+        <div className="absolute top-3 right-3 backdrop-blur-md bg-white/90 dark:bg-gray-900/90 rounded-full px-2 py-1 shadow-lg border border-white/20">
+          <div className="flex items-center gap-1">
+            {/* <span className="text-lg">🔥</span> */}
+            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+              {meal.calories}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">kcal</span>
+          </div>
+        </div>
       </div>
 
       <div className="p-4">
