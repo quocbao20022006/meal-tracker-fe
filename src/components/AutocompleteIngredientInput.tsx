@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { searchIngredients } from "../services/ingredient.service";
 import { IngredientResponse } from "../types";
+import { Input } from "./ui/input";
 
 interface AutocompleteIngredientInputProps {
   value: string;
@@ -92,7 +93,7 @@ export default function AutocompleteIngredientInput({
 
   return (
     <div className="relative w-full" ref={containerRef}>
-      <input
+      <Input
         type="text"
         className={`w-full p-2 rounded-lg border text-gray-900 ${isDefault ? "placeholder:text-gray-600" : "placeholder:text-gray-900"}`}
         placeholder={placeholder}

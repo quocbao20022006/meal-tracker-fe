@@ -122,7 +122,7 @@ export interface CreateMealPlanRequest {
   servings: number;
 }
 
-export interface UpdateMealRequest {
+export interface UpsertMealRequest {
   mealName: string;
   mealDescription?: string | null;
   image?: File | null; // image file, tương ứng với MultipartFile

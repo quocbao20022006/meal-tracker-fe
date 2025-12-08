@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { IngredientResponse, MealResponse, UpdateMealRequest } from "../types";
+import { IngredientResponse, MealResponse, UpsertMealRequest } from "../types";
 import { X, Plus, Trash } from "lucide-react";
 import { updateMeal } from "../services/meal.service";
 import AutocompleteIngredientInput from "./AutocompleteIngredientInput";
@@ -20,7 +20,7 @@ export default function EditMealModal({
   onUpdate,
 }: EditMealModalProps) {
   const [mealForm, setMealForm] = useState<MealResponse>(meal);
-  const [form, setForm] = useState<UpdateMealRequest>({
+  const [form, setForm] = useState<UpsertMealRequest>({
     mealName: meal.name,
     mealDescription: meal.description || "",
     image: null, // chưa có ảnh mới
@@ -32,9 +32,9 @@ export default function EditMealModal({
       })),
     mealInstructions: Array.isArray(meal.mealInstructions)
       ? meal.mealInstructions.map((ins) => ({
-          step: ins.step,
-          instruction: ins.instruction,
-        }))
+        step: ins.step,
+        instruction: ins.instruction,
+      }))
       : [],
     cookingTime: meal.cookingTime || "",
     servings: meal.servings || 1,
@@ -46,8 +46,8 @@ export default function EditMealModal({
   const [ingredientNames, setIngredientNames] = useState<Map<number, string>>(
     new Map()
   );
-    // Thêm state để quản lý localId
-const [ingredientLocalIds, setIngredientLocalIds] = useState<number[]>([]);
+  // Thêm state để quản lý localId
+  const [ingredientLocalIds, setIngredientLocalIds] = useState<number[]>([]);
 
   const handleIngredientChange = (
     index: number,
@@ -98,43 +98,43 @@ const [ingredientLocalIds, setIngredientLocalIds] = useState<number[]>([]);
 
 
 
-// Khi mở modal, khởi tạo localIds từ dữ liệu cũ
-useEffect(() => {
-  if (isOpen && meal) {
-    // ... các setForm khác ...
+  // Khi mở modal, khởi tạo localIds từ dữ liệu cũ
+  useEffect(() => {
+    if (isOpen && meal) {
+      // ... các setForm khác ...
 
-    // Tạo localId cho các ingredient hiện có
-    const localIds = meal.mealIngredients
-      .filter(ing => ing && ing.ingredientId)
-      .map((_, i) => Date.now() + i); // hoặc dùng crypto.randomUUID() nếu browser hỗ trợ
+      // Tạo localId cho các ingredient hiện có
+      const localIds = meal.mealIngredients
+        .filter(ing => ing && ing.ingredientId)
+        .map((_, i) => Date.now() + i); // hoặc dùng crypto.randomUUID() nếu browser hỗ trợ
 
-    setIngredientLocalIds(localIds);
+      setIngredientLocalIds(localIds);
 
-    // ... reset ingredientNames như cũ ...
-  }
-}, [isOpen, meal]);
+      // ... reset ingredientNames như cũ ...
+    }
+  }, [isOpen, meal]);
 
   const addIngredient = () => {
-  const newLocalId = Date.now(); // hoặc crypto.randomUUID()
+    const newLocalId = Date.now(); // hoặc crypto.randomUUID()
 
-  setForm((prev) => ({
-    ...prev,
-    mealIngredients: [
-      ...prev.mealIngredients,
-      { ingredientId: 0, quantity: 0 },
-    ],
-  }));
+    setForm((prev) => ({
+      ...prev,
+      mealIngredients: [
+        ...prev.mealIngredients,
+        { ingredientId: 0, quantity: 0 },
+      ],
+    }));
 
-  // Thêm localId mới
-  setIngredientLocalIds((prev) => [...prev, newLocalId]);
+    // Thêm localId mới
+    setIngredientLocalIds((prev) => [...prev, newLocalId]);
 
-  // Đảm bảo ingredientNames có entry cho index mới (dù rỗng)
-  setIngredientNames((prev) => {
-    const newMap = new Map(prev);
-    newMap.set(prev.size, ""); // hoặc dùng newLocalId làm key nếu muốn
-    return newMap;
-  });
-};
+    // Đảm bảo ingredientNames có entry cho index mới (dù rỗng)
+    setIngredientNames((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(prev.size, ""); // hoặc dùng newLocalId làm key nếu muốn
+      return newMap;
+    });
+  };
 
   const removeIngredient = (index: number) => {
     setForm((prev) => ({
@@ -252,9 +252,9 @@ useEffect(() => {
           })),
         mealInstructions: Array.isArray(meal.mealInstructions)
           ? meal.mealInstructions.map((ins) => ({
-              step: ins.step,
-              instruction: ins.instruction,
-            }))
+            step: ins.step,
+            instruction: ins.instruction,
+          }))
           : [],
         cookingTime: meal.cookingTime || "",
         servings: meal.servings || 1,
@@ -449,7 +449,7 @@ useEffect(() => {
               const localId = ingredientLocalIds[index];
               return (
                 <div
-                  key={localId} 
+                  key={localId}
                   className="flex flex-wrap md:flex-nowrap gap-2 items-center"
                 >
                   <AutocompleteIngredientInput

@@ -1,5 +1,5 @@
 import * as httpClient from '../lib/http-client';
-import { MealResponse, PaginatedMeals, UpdateMealRequest } from '../types';
+import { MealResponse, PaginatedMeals, UpsertMealRequest } from '../types';
 
 export const getAllMeals = async (page: number = 0) => {
   return httpClient.get<PaginatedMeals>('/meal/all?page=' + page);
@@ -21,11 +21,11 @@ export const searchMeals = async (query: string) => {
   return httpClient.get<MealResponse[]>(`/meal/search?query=${query}`);
 };
 
-export const createMeal = async (meal: Omit<MealResponse, 'id'>) => {
-  return httpClient.post<MealResponse>('/meals', meal);
+export const createMeal = async (meal: UpsertMealRequest) => {
+  return httpClient.post<MealResponse>('/meal/add', meal);
 };
 
-export const updateMeal = async (id: number, meal: UpdateMealRequest) => {
+export const updateMeal = async (id: number, meal: UpsertMealRequest) => {
   const formData = new FormData();
 
   // Tên field phải camelCase đúng với Java class
