@@ -48,51 +48,89 @@ export interface UserProfile {
   userId: number;
   height: number;
   weight: number;
-  age: number;
+  weightGoal?: number;
+  birthDate: string; // Changed from age to birthDate
+  age?: number; // Computed field
   gender: 'male' | 'female' | 'other';
   bmi: number;
   bmiCategory: string;
   dailyCalorieGoal: number;
+  activityLevel?: string;
+  goal?: string;
+  weightDifference?: number;
+  goalAchieved?: boolean;
   updatedAt: string;
 }
 
 export interface CreateUserProfileRequest {
   height: number;
   weight: number;
-  age: number;
+  weightGoal?: number;
+  birthDate: string; // Changed from age to birthDate
   gender: 'male' | 'female' | 'other';
-  dailyCalorieGoal: number;
+  activityLevel?: string;
+  goal?: string;
 }
 
 export interface UpdateUserProfileRequest {
   height?: number;
   weight?: number;
-  age?: number;
+  weightGoal?: number;
+  birthDate?: string; // Changed from age to birthDate
   gender?: 'male' | 'female' | 'other';
-  dailyCalorieGoal?: number;
+  activityLevel?: string;
+  goal?: string;
 }
+
+// Helper để validate BMI cho weight goal
+export interface BMIValidation {
+  isValid: boolean;
+  message: string;
+  recommendedMinWeight: number;
+  recommendedMaxWeight: number;
+  bmiAtGoal: number;
+}
+
+// Activity Level Options
+export const ACTIVITY_LEVELS = {
+  sedentary: 'Sedentary (little or no exercise)',
+  light: 'Light (exercise 1-3 days/week)',
+  moderate: 'Moderate (exercise 3-5 days/week)',
+  active: 'Active (exercise 6-7 days/week)',
+  very_active: 'Very Active (intense exercise daily)',
+} as const;
+
+export type ActivityLevel = keyof typeof ACTIVITY_LEVELS;
+
+export const GOAL_OPTIONS = {
+  lose_weight: 'Lose Weight',
+  maintain: 'Maintain Weight',
+  gain_weight: 'Gain Weight',
+} as const;
+
+export type GoalType = keyof typeof GOAL_OPTIONS;
 
 export interface MealResponse {
   id: number;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  mealIngredients: {
+  meal_name: string;
+  meal_description: string | null;
+  image_url: string | null;
+  meal_ingredients: {
     ingredientId: number;
     ingredientName: string;
     quantity: number;
     description?: string;
     unit?: string;
   }[];
-  mealInstructions: {
+  meal_instructions: {
     step: number;
     instruction: string;
   }[];
-  cookingTime: string;
+  cooking_time: string;
   calories: number;
   servings: number;
   nutrition: string[];
-  categoryName: string[];
+  category_name: string[];
 }
 
 export interface PaginatedMeals {
@@ -114,7 +152,6 @@ export interface MealPlan {
   meal?: MealResponse;
 }
 
-
 export interface CreateMealPlanRequest {
   mealId: number;
   date: string;
@@ -125,7 +162,7 @@ export interface CreateMealPlanRequest {
 export interface UpdateMealRequest {
   mealName: string;
   mealDescription?: string | null;
-  image?: File | null; // image file, tương ứng với MultipartFile
+  image?: File | null;
   mealIngredients: {
     ingredientId: number;
     quantity: number;
@@ -170,6 +207,7 @@ export interface UpdateMealPlanTemplateRequest {
   startDate?: string;
   endDate?: string;
   isActive?: boolean;
+  completed?: boolean;
 }
 
 export interface ApiError {
@@ -197,6 +235,6 @@ export interface PaginatedIngredients {
   content: IngredientResponse[];
   totalElements: number;
   totalPages: number;
-  number: number; // current page
+  number: number;
   size: number;
 }
