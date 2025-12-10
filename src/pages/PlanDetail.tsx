@@ -31,7 +31,6 @@ import {
 import {
   CreateMealPlanItemRequest,
   MEAL_TYPES,
-  MealPlan,
   MealPlanItemResponse,
   MealPlanResponse,
   MealResponse,
@@ -41,6 +40,7 @@ import * as mealService from "../services/meal.service";
 import * as mealPlanService from "../services/meal-plan.service";
 import * as mealPlanItemService from "../services/meal-plan-item.service";
 import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "@/hooks/use-toast";
 
 export default function PlanDetail() {
   const navigate = useNavigate();
@@ -128,7 +128,18 @@ export default function PlanDetail() {
       }
 
       setPlan(result.data);
+      await loadMealPlanItems();
+    } catch (err) {
+      console.error("Error loading plan details:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const loadMealPlanItems = async () => {
+    if (!planId) return;
+    setLoading(true);
+    try {
       const getMealPlanItemsResult =
         await mealPlanItemService.getMealPlanItemsByDate({
           mealPlanId: +planId,
@@ -169,17 +180,20 @@ export default function PlanDetail() {
         setSelectedMeal(null);
         setShowAddMealModal(false);
         setSearchQuery("");
+        await loadMealPlanItems();
       }
     } catch (err) {
       console.error("Error adding meal:", err);
     }
   };
 
-  const handleDeleteMeal = async (mealId: number) => {
+  const handleDeleteMeal = async (mealPlanItemId: number) => {
     try {
-      await mealPlanService.deleteMealPlan(mealId);
-      setMeals(meals.filter((m) => m.id !== mealId));
+      await mealPlanItemService.deleteMealPlanItem(mealPlanItemId);
+      alert("Delete successfully");
+      await loadMealPlanItems();
     } catch (err) {
+      alert("Delete Failed");
       console.error("Error deleting meal:", err);
     }
   };
@@ -342,7 +356,7 @@ export default function PlanDetail() {
                               }
                             </span>
                             <span className="text-lg font-bold">
-                              {date.getDate()}/{date.getMonth()}
+                              {date.getDate()}/{date.getMonth() + 1}
                             </span>
                           </button>
                         );
@@ -394,17 +408,17 @@ export default function PlanDetail() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                        {type}
+                        {MEAL_TYPES[type]}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {Math.round(typeCalories)} cal
                       </p>
                     </div>
-                    {/* <Button
+                    <Button
                       onClick={() => {
-                        setSelectedMealType(type);
+                        setSelectedMealType(type as MealType);
                         setSelectedMeal(null);
-                        setServings(1);
+                        // setServings(1);
                         setSearchQuery("");
                         setShowAddMealModal(true);
                       }}
@@ -412,7 +426,7 @@ export default function PlanDetail() {
                     >
                       <Plus className="w-4 h-4" />
                       Add Meal
-                    </Button> */}
+                    </Button>
                   </div>
 
                   {/* Meals Grid */}
@@ -438,11 +452,11 @@ export default function PlanDetail() {
                   ) : (
                     <Card className="mb-6 border-dashed">
                       <CardContent className="pt-6 py-12 flex flex-col items-center justify-center">
-                        <Plus className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+                        {/* <Plus className="w-12 h-12 text-muted-foreground mb-4 opacity-50" /> */}
                         <p className="text-muted-foreground mb-4">
-                          No meals added for {type}
+                          No meals added for {MEAL_TYPES[type]}
                         </p>
-                        <Button
+                        {/* <Button
                           onClick={() => {
                             setSelectedMealType(type as MealType);
                             setSelectedMeal(null);
@@ -453,8 +467,8 @@ export default function PlanDetail() {
                           className="flex items-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
-                          Add {type}
-                        </Button>
+                          Add {MEAL_TYPES[type]}
+                        </Button> */}
                       </CardContent>
                     </Card>
                   )}

@@ -48,15 +48,10 @@ export interface UserProfile {
   userId: number;
   height: number;
   weight: number;
-<<<<<<< HEAD
-  age: number;
-  gender: "male" | "female" | "other";
-=======
   weightGoal?: number;
   birthDate: string; // Changed from age to birthDate
   age?: number; // Computed field
-  gender: 'male' | 'female' | 'other';
->>>>>>> 362375354199fff8a156941a6567593619dcca2c
+  gender: "male" | "female" | "other";
   bmi: number;
   bmiCategory: string;
   dailyCalorieGoal: number;
@@ -70,33 +65,21 @@ export interface UserProfile {
 export interface CreateUserProfileRequest {
   height: number;
   weight: number;
-<<<<<<< HEAD
-  age: number;
-  gender: "male" | "female" | "other";
-  dailyCalorieGoal: number;
-=======
   weightGoal?: number;
   birthDate: string; // Changed from age to birthDate
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   activityLevel?: string;
   goal?: string;
->>>>>>> 362375354199fff8a156941a6567593619dcca2c
 }
 
 export interface UpdateUserProfileRequest {
   height?: number;
   weight?: number;
-<<<<<<< HEAD
-  age?: number;
-  gender?: "male" | "female" | "other";
-  dailyCalorieGoal?: number;
-=======
   weightGoal?: number;
   birthDate?: string; // Changed from age to birthDate
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   activityLevel?: string;
   goal?: string;
->>>>>>> 362375354199fff8a156941a6567593619dcca2c
 }
 
 // Helper để validate BMI cho weight goal
@@ -110,19 +93,19 @@ export interface BMIValidation {
 
 // Activity Level Options
 export const ACTIVITY_LEVELS = {
-  sedentary: 'Sedentary (little or no exercise)',
-  light: 'Light (exercise 1-3 days/week)',
-  moderate: 'Moderate (exercise 3-5 days/week)',
-  active: 'Active (exercise 6-7 days/week)',
-  very_active: 'Very Active (intense exercise daily)',
+  sedentary: "Sedentary (little or no exercise)",
+  light: "Light (exercise 1-3 days/week)",
+  moderate: "Moderate (exercise 3-5 days/week)",
+  active: "Active (exercise 6-7 days/week)",
+  very_active: "Very Active (intense exercise daily)",
 } as const;
 
 export type ActivityLevel = keyof typeof ACTIVITY_LEVELS;
 
 export const GOAL_OPTIONS = {
-  lose_weight: 'Lose Weight',
-  maintain: 'Maintain Weight',
-  gain_weight: 'Gain Weight',
+  lose_weight: "Lose Weight",
+  maintain: "Maintain Weight",
+  gain_weight: "Gain Weight",
 } as const;
 
 export type GoalType = keyof typeof GOAL_OPTIONS;
@@ -180,7 +163,6 @@ export interface CreateMealPlanRequest {
   isActive: boolean;
 }
 
-<<<<<<< HEAD
 export interface UpdateMealPlanRequest {
   name: string;
   targetCalories?: number;
@@ -189,7 +171,7 @@ export interface UpdateMealPlanRequest {
   note?: string;
   isActive: boolean;
   planType: PlanType;
-=======
+}
 export interface UpsertMealRequest {
   mealName: string;
   mealDescription?: string | null;
@@ -207,7 +189,6 @@ export interface UpsertMealRequest {
   servings: number;
   nutrition?: string[];
   categoryName?: string[];
->>>>>>> 362375354199fff8a156941a6567593619dcca2c
 }
 
 // Meal Plan
@@ -253,7 +234,6 @@ export interface PaginatedMealPlans {
   content: MealPlanResponse[];
 }
 
-<<<<<<< HEAD
 export interface MealPlanItemRequest {
   date?: string;
   mealPlanId?: number;
@@ -278,7 +258,7 @@ export interface CreateMealPlanItemRequest {
   mealId: number;
   mealType: MealType;
   mealDate: string;
-=======
+}
 export interface UpdateMealPlanTemplateRequest {
   name?: string;
   description?: string;
@@ -287,9 +267,7 @@ export interface UpdateMealPlanTemplateRequest {
   endDate?: string;
   isActive?: boolean;
   completed?: boolean;
->>>>>>> 362375354199fff8a156941a6567593619dcca2c
 }
-
 export interface ApiError {
   message: string;
   status: number;
