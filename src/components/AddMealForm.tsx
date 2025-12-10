@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Plus, X, ChefHat, ArrowLeft, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createMeal } from "../services/meal.service";
+import { getAllCategories } from "../services/category.service";
+import { CategoryResponse } from "../types";
 import AutocompleteIngredientInput from "./AutocompleteIngredientInput";
-import AddMealSuccessToast from "./AddMealSuccessToast";
 
 // Types
 interface IngredientResponse {
@@ -33,6 +35,7 @@ interface MealIngredient {
   ingredientId: number;
   quantity: number;
   unit?: string;
+  name?: string; // For display purposes
 }
 
 interface MealInstruction {
@@ -40,131 +43,158 @@ interface MealInstruction {
   instruction: string;
 }
 
-const AddMealForm = () => {
+interface MealFormData {
+  mealName: string;
+  mealDescription: string;
+  image: File | null;
+  mealIngredients: MealIngredient[];
+  mealInstructions: MealInstruction[];
+  cookingTime: string;
+  cookingTimeHours: string;
+  cookingTimeMinutes: string;
+  servings: number;
+  calories: string;
+  categories: number[];
+  nutrition: string[];
+}
+
+export default function AddMealForm() {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [nutritionItems, setNutritionItems] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<CategoryResponse[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    CategoryResponse[]
+  >([]);
+  const [nutritionInput, setNutritionInput] = useState("");
 
-  // Ingredient states
-  const [ingredientNames, setIngredientNames] = useState<Map<number, string>>(
-    new Map()
-  );
-  const [ingredientLocalIds, setIngredientLocalIds] = useState<number[]>([
-    Date.now(),
-  ]);
-
-  const [form, setForm] = useState({
-    mealName: "",
-    mealDescription: "",
-    image: null as File | null,
-    mealIngredients: [
-      { ingredientId: 0, quantity: 0, unit: "" },
-    ] as MealIngredient[],
-    mealInstructions: [{ step: 1, instruction: "" }] as MealInstruction[],
-    cookingTime: "",
-    servings: 1,
-    calories: "",
+  // Initialize React Hook Form
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    reset,
+    formState: { errors },
+  } = useForm<MealFormData>({
+    defaultValues: {
+      mealName: "",
+      mealDescription: "",
+      image: null,
+      mealIngredients: [{ ingredientId: 0, quantity: 0, unit: "", name: "" }],
+      mealInstructions: [{ step: 1, instruction: "" }],
+      cookingTime: "",
+      cookingTimeHours: "0",
+      cookingTimeMinutes: "0",
+      servings: 1,
+      calories: "",
+      categories: [],
+      nutrition: [],
+    },
   });
 
-  const categoryOptions = [
-    "appetizer",
-    "main dish",
-    "soup",
-    "salad",
-    "snack",
-    "dessert",
-    "beverage",
-  ];
+  // Field Arrays for dynamic fields
+  const {
+    fields: ingredientFields,
+    append: appendIngredient,
+    remove: removeIngredient,
+  } = useFieldArray({
+    control,
+    name: "mealIngredients",
+  });
 
-  // const { toast } = useToast();
+  const {
+    fields: instructionFields,
+    append: appendInstruction,
+    remove: removeInstruction,
+  } = useFieldArray({
+    control,
+    name: "mealInstructions",
+  });
 
-  // Fetch ingredients from backend
-  // useEffect(() => {
-  //   const fetchIngredients = async () => {
-  //     try {
-  //       const response = await axios.get("/api/ingredients");
-  //       setAllIngredients(response.data);
-  //     } catch (error) {
-  //       console.error("Error fetching ingredients:", error);
-  //     }
-  //   };
-  //   fetchIngredients();
-  // }, []);
+  const [nutritionItems, setNutritionItems] = useState<string[]>([]);
+
+  // Watch cooking time fields
+  const cookingTimeHours = watch("cookingTimeHours");
+  const cookingTimeMinutes = watch("cookingTimeMinutes");
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await getAllCategories();
+        if (res.data) {
+          setAllCategories(res.data.content);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Update cooking time whenever hours or minutes change
+  useEffect(() => {
+    const h = Number(cookingTimeHours) || 0;
+    const m = Number(cookingTimeMinutes) || 0;
+    let cookingTime = "";
+
+    if (h > 0) cookingTime += `${h} hour${h > 1 ? "s" : ""} `;
+    if (m > 0) cookingTime += `${m} minute${m > 1 ? "s" : ""}`;
+
+    setValue("cookingTime", cookingTime.trim());
+  }, [cookingTimeHours, cookingTimeMinutes, setValue]);
 
   // Image handling
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setForm({ ...form, image: file });
+      setValue("image", file);
       if (imagePreview) URL.revokeObjectURL(imagePreview);
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
   // Category handlers
-  const handleAddCategory = (category: string) => {
-    if (!categories.includes(category)) {
-      setCategories([...categories, category]);
+  const handleAddCategory = (category: CategoryResponse) => {
+    if (!selectedCategories.some((c) => c.id === category.id)) {
+      const newCategories = [...selectedCategories, category];
+      setSelectedCategories(newCategories);
+      setValue(
+        "categories",
+        newCategories.map((c) => c.id)
+      );
     }
   };
 
-  const handleRemoveCategory = (categoryToRemove: string) => {
-    setCategories(categories.filter((cat) => cat !== categoryToRemove));
+  const handleRemoveCategory = (id: number) => {
+    const newCategories = selectedCategories.filter((c) => c.id !== id);
+    setSelectedCategories(newCategories);
+    setValue(
+      "categories",
+      newCategories.map((c) => c.id)
+    );
   };
 
   // Nutrition handlers
   const handleAddNutrition = () => {
-    const input = document.getElementById(
-      "nutrition-input"
-    ) as HTMLInputElement;
-    const value = input?.value?.trim();
-    if (value && !nutritionItems.includes(value)) {
-      setNutritionItems([...nutritionItems, value]);
-      input.value = "";
+    const value = nutritionInput.trim();
+    const currentNutrition = getValues("nutrition");
+
+    if (value && !currentNutrition.includes(value)) {
+      const newNutrition = [...currentNutrition, value];
+      setNutritionItems(newNutrition);
+      setValue("nutrition", newNutrition);
+      setNutritionInput("");
     }
   };
 
   const handleRemoveNutrition = (item: string) => {
-    setNutritionItems(nutritionItems.filter((n) => n !== item));
-  };
-
-  // Ingredient handlers
-  const addIngredient = () => {
-    const newLocalId = Date.now();
-    setForm((prev) => ({
-      ...prev,
-      mealIngredients: [
-        ...prev.mealIngredients,
-        { ingredientId: 0, quantity: 0, unit: "" },
-      ],
-    }));
-    setIngredientLocalIds((prev) => [...prev, newLocalId]);
-    setIngredientNames((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(prev.size, "");
-      return newMap;
-    });
-  };
-
-  const removeIngredient = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      mealIngredients: prev.mealIngredients.filter((_, i) => i !== index),
-    }));
-    setIngredientLocalIds((prev) => prev.filter((_, i) => i !== index));
-    setIngredientNames((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(index);
-      const reordered = new Map();
-      let newIndex = 0;
-      for (const [oldIndex, value] of newMap.entries()) {
-        if (oldIndex !== index) {
-          reordered.set(newIndex++, value);
-        }
-      }
-      return reordered;
-    });
+    const newNutrition = nutritionItems.filter((n) => n !== item);
+    setNutritionItems(newNutrition);
+    setValue("nutrition", newNutrition); // Sync với RHF
   };
 
   // Ingredient handlers
@@ -172,95 +202,52 @@ const AddMealForm = () => {
     index: number,
     ingredient: IngredientResponse
   ) => {
-    setForm((prev) => {
-      const arr = [...prev.mealIngredients];
-      arr[index] = {
-        ingredientId: ingredient.id,
-        quantity: arr[index]?.quantity || 0,
-        unit: ingredient.description ?? "grams",
-      };
-      return { ...prev, mealIngredients: arr };
-    });
-    // Cập nhật ingredient name để hiển thị
-    setIngredientNames((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(index, ingredient.name);
-      return newMap;
-    });
+    const currentIngredients = getValues("mealIngredients");
+    const updatedIngredient = {
+      ...currentIngredients[index],
+      ingredientId: ingredient.id,
+      unit: ingredient.description ?? "grams",
+      name: ingredient.name,
+    };
+
+    setValue(`mealIngredients.${index}`, updatedIngredient);
+  };
+
+  const addIngredient = () => {
+    appendIngredient({ ingredientId: 0, quantity: 0, unit: "", name: "" });
   };
 
   // Instruction handlers
   const addInstruction = () => {
-    setForm((prev) => ({
-      ...prev,
-      mealInstructions: [
-        ...prev.mealInstructions,
-        { step: prev.mealInstructions.length + 1, instruction: "" },
-      ],
-    }));
-  };
-
-  const removeInstruction = (index: number) => {
-    const updated = form.mealInstructions.filter((_, i) => i !== index);
-    updated.forEach((item, i) => {
-      item.step = i + 1;
+    const currentInstructions = getValues("mealInstructions");
+    appendInstruction({
+      step: currentInstructions.length + 1,
+      instruction: "",
     });
-    setForm({ ...form, mealInstructions: updated });
   };
 
-  const handleInstructionChange = (
-    index: number,
-    field: "step" | "instruction",
-    value: string
-  ) => {
-    const updated = [...form.mealInstructions];
-    if (field === "step") {
-      updated[index] = {
-        ...updated[index],
-        step: Number(value) || updated[index].step,
-      };
-    } else {
-      updated[index] = { ...updated[index], instruction: value };
-    }
-    setForm({ ...form, mealInstructions: updated });
-  };
-
-  // Cooking time handlers
-  const getHoursFromCookingTime = (time: string) => {
-    if (!time) return "0";
-    const match = time.match(/(\d+)\s*hour/);
-    return match ? match[1] : "0";
-  };
-
-  const getMinutesFromCookingTime = (time: string) => {
-    if (!time) return "0";
-    const match = time.match(/(\d+)\s*minute/);
-    return match ? match[1] : "0";
-  };
-
-  const handleCookingTime = (hours: string, minutes: string) => {
-    let cookingTime = "";
-    const h = Number(hours);
-    const m = Number(minutes);
-
-    if (h > 0) cookingTime += `${h} hour${h > 1 ? "s" : ""} `;
-    if (m > 0) cookingTime += `${m} minute${m > 1 ? "s" : ""}`;
-
-    setForm({ ...form, cookingTime: cookingTime.trim() });
+  const handleRemoveInstruction = (index: number) => {
+    removeInstruction(index);
+    // Reorder steps
+    const instructions = getValues("mealInstructions");
+    instructions.forEach((_, i) => {
+      setValue(`mealInstructions.${i}.step`, i + 1);
+    });
   };
 
   // Submit handler
-  const handleSubmit = async () => {
-    if (!form.mealName || !form.servings || !form.cookingTime) {
+  const onSubmit = async (data: MealFormData) => {
+    if (!data.mealName || !data.servings || !data.cookingTime) {
       alert(
         "Please fill in all required fields (Name, Servings, Cooking Time)"
       );
       return;
     }
 
-    const validIngredients = form.mealIngredients.filter(
+    const validIngredients = data.mealIngredients.filter(
       (ing) => ing.ingredientId > 0
     );
+
     if (validIngredients.length === 0) {
       alert("Please add at least one ingredient!");
       return;
@@ -270,33 +257,46 @@ const AddMealForm = () => {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("mealName", form.mealName);
-      formData.append("mealDescription", form.mealDescription);
-      formData.append("cookingTime", form.cookingTime);
-      formData.append("servings", form.servings.toString());
-      // formData.append("calories", form.calories);
+      formData.append("mealName", data.mealName);
+      formData.append("mealDescription", data.mealDescription);
+      formData.append("cookingTime", data.cookingTime);
+      formData.append("servings", data.servings.toString());
 
-      if (form.image) {
-        formData.append("image", form.image);
+      if (data.image) {
+        formData.append("image", data.image);
       }
 
-      formData.append("mealIngredients", JSON.stringify(validIngredients));
-      formData.append(
-        "mealInstructions",
-        JSON.stringify(
-          form.mealInstructions.filter((ins) => ins.instruction.trim())
-        )
-      );
-      formData.append("categories", JSON.stringify(categories));
-      formData.append("nutrition", JSON.stringify(nutritionItems));
+      // ingredients
+      validIngredients.forEach((ing, i) => {
+        formData.append(
+          `mealIngredients[${i}].ingredientId`,
+          String(ing.ingredientId)
+        );
+        formData.append(`mealIngredients[${i}].quantity`, String(ing.quantity));
+        formData.append(`mealIngredients[${i}].unit`, ing.unit || "");
+      });
 
-      // const response = await axios.post("/api/meals", formData, {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      // });
+      // instructions
+      data.mealInstructions.forEach((ins, i) => {
+        formData.append(`mealInstructions[${i}].step`, String(ins.step));
+        formData.append(`mealInstructions[${i}].instruction`, ins.instruction);
+      });
 
-      const result = await createMeal(form);
+      // categories
+      data.categories.forEach((c) => {
+        formData.append("categories", String(c));
+      });
+
+      // nutrition
+      data.nutrition.forEach((n, i) => {
+        formData.append(`nutrition[${i}]`, n);
+      });
+
+      formData.append("nutrition", JSON.stringify(data.nutrition));
+
+      console.log("Submitting form data:", data);
+
+      const result = await createMeal(formData);
 
       if (result.error) {
         console.error("Update error:", result.error);
@@ -306,24 +306,14 @@ const AddMealForm = () => {
         return;
       } else {
         alert("Meal added successfully!");
-        <AddMealSuccessToast></AddMealSuccessToast>
 
         // Reset form
-        setForm({
-          mealName: "",
-          mealDescription: "",
-          image: null,
-          mealIngredients: [{ ingredientId: 0, quantity: 0, unit: "" }],
-          mealInstructions: [{ step: 1, instruction: "" }],
-          cookingTime: "",
-          servings: 1,
-          calories: "",
-        });
-        setCategories([]);
-        setNutritionItems([]);
-        setIngredientNames(new Map());
-        setIngredientLocalIds([Date.now()]);
+        reset();
+        setSelectedCategories([]);
+        setNutritionInput("");
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
         setImagePreview(null);
+
         window.history.back();
       }
     } catch (error) {
@@ -379,70 +369,56 @@ const AddMealForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="flex flex-col gap-4">
+                  {/* Meal name */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Meal Name *</Label>
                     <Input
                       id="name"
-                      placeholder="e.g., Grilled Salmon with Vegetables"
-                      value={form.mealName}
-                      onChange={(e) =>
-                        setForm({ ...form, mealName: e.target.value })
-                      }
+                      placeholder="Enter meal name..."
+                      {...register("mealName", { required: true })}
                     />
+                    {errors.mealName && (
+                      <span className="text-red-500 text-sm">
+                        This field is required
+                      </span>
+                    )}
                   </div>
 
+                  {/* Meal description */}
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       placeholder="Brief description of your meal..."
-                      value={form.mealDescription}
-                      onChange={(e) =>
-                        setForm({ ...form, mealDescription: e.target.value })
-                      }
+                      {...register("mealDescription")}
                       rows={3}
                     />
                   </div>
 
+                  {/* Servings */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="servings">Servings *</Label>
                       <Input
                         id="servings"
                         type="number"
-                        value={form.servings}
-                        onChange={(e) =>
-                          setForm({ ...form, servings: Number(e.target.value) })
-                        }
+                        {...register("servings", {
+                          required: true,
+                          min: 1,
+                          valueAsNumber: true,
+                        })}
                       />
                     </div>
-                    {/* <div className="space-y-2">
-                      <Label htmlFor="calories">Calories *</Label>
-                      <Input
-                        id="calories"
-                        type="number"
-                        placeholder="e.g., 350"
-                        value={form.calories}
-                        onChange={(e) =>
-                          setForm({ ...form, calories: e.target.value })
-                        }
-                      />
-                    </div> */}
                   </div>
 
+                  {/* Cooking time */}
                   <div className="space-y-2">
                     <Label>Cooking Time *</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
                         placeholder="0"
-                        value={getHoursFromCookingTime(form.cookingTime)}
-                        onChange={(e) =>
-                          handleCookingTime(
-                            e.target.value,
-                            getMinutesFromCookingTime(form.cookingTime)
-                          )
-                        }
+                        {...register("cookingTimeHours")}
                         className="w-20"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -451,13 +427,7 @@ const AddMealForm = () => {
                       <Input
                         type="number"
                         placeholder="0"
-                        value={getMinutesFromCookingTime(form.cookingTime)}
-                        onChange={(e) =>
-                          handleCookingTime(
-                            getHoursFromCookingTime(form.cookingTime),
-                            e.target.value
-                          )
-                        }
+                        {...register("cookingTimeMinutes")}
                         className="w-20"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -491,7 +461,6 @@ const AddMealForm = () => {
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12v9m0-9l3 3m-3-3l-3 3m9-7h3m-6 0h.01M3 9h3m-6 0h.01M12 3v9"
                         />
                       </svg>
-
                       <span className="text-gray-500 dark:text-gray-400 text-sm">
                         Click to upload image
                       </span>
@@ -503,8 +472,6 @@ const AddMealForm = () => {
                         alt="Preview"
                         className="w-full h-64 object-cover rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
                       />
-
-                      {/* Button Change Image (overlay) */}
                       <label
                         htmlFor="image"
                         className="absolute bottom-3 right-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm px-3 py-1.5 rounded-lg shadow cursor-pointer border hover:bg-gray-50 dark:hover:bg-gray-700 transition"
@@ -514,7 +481,6 @@ const AddMealForm = () => {
                     </div>
                   )}
 
-                  {/* Hidden input */}
                   <Input
                     id="image"
                     type="file"
@@ -526,39 +492,50 @@ const AddMealForm = () => {
               </div>
 
               {/* Categories */}
-              <div className="space-y-2 mt-6">
-                <Label>Categories</Label>
-                <Select onValueChange={handleAddCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {categories.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {categories.map((cat) => (
-                      <span
-                        key={cat}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium"
+              <div className="space-y-3 mt-6">
+                <Label className="text-sm font-medium">Categories</Label>
+                <div className="relative">
+                  <Select
+                    onValueChange={(value) => {
+                      const cat = allCategories.find(
+                        (c) => c.id === Number(value)
+                      );
+                      if (cat) {
+                        handleAddCategory(cat);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selected category chips */}
+                <div className="flex flex-wrap gap-2">
+                  {selectedCategories.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium"
+                    >
+                      <span className="text-sm">{cat.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCategory(cat.id)}
+                        className="hover:text-emerald-900 dark:hover:text-emerald-100"
                       >
-                        {cat}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCategory(cat)}
-                          className="hover:text-emerald-900 dark:hover:text-emerald-100"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Nutrition */}
@@ -568,10 +545,14 @@ const AddMealForm = () => {
                   <Input
                     id="nutrition-input"
                     placeholder="e.g., Protein 25g"
-                    onKeyPress={(e) =>
-                      e.key === "Enter" &&
-                      (e.preventDefault(), handleAddNutrition())
-                    }
+                    value={nutritionInput}
+                    onChange={(e) => setNutritionInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddNutrition();
+                      }
+                    }}
                   />
                   <Button
                     type="button"
@@ -587,14 +568,10 @@ const AddMealForm = () => {
                     {nutritionItems.map((item) => (
                       <span
                         key={item}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium"
                       >
                         {item}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveNutrition(item)}
-                          className="hover:text-blue-900 dark:hover:text-blue-100"
-                        >
+                        <button onClick={() => handleRemoveNutrition(item)}>
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </span>
@@ -615,67 +592,60 @@ const AddMealForm = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                {form.mealIngredients.map((item, index) => {
-                  const localId = ingredientLocalIds[index];
-                  return (
-                    <div key={localId} className="relative">
-                      <div className="flex gap-2 items-center">
-                        {/* Ingredient Name with Autocomplete */}
-                        <div className="flex-[8]">
-                          <AutocompleteIngredientInput
-                            value={ingredientNames.get(index) || ""}
-                            onSelect={(ing) =>
-                              handleIngredientChange(index, ing)
-                            }
-                            placeholder="Type ingredient..."
-                          />
-                        </div>
+                {ingredientFields.map((field, index) => (
+                  <div key={field.id} className="relative">
+                    <div className="flex gap-2 items-center">
+                      {/* Ingredient Name with Autocomplete */}
+                      <div className="flex-[8]">
+                        <Controller
+                          control={control}
+                          name={`mealIngredients.${index}.name`}
+                          render={({ field: { value } }) => (
+                            <AutocompleteIngredientInput
+                              value={value || ""}
+                              onSelect={(ing) =>
+                                handleIngredientChange(index, ing)
+                              }
+                              placeholder="Type ingredient..."
+                            />
+                          )}
+                        />
+                      </div>
 
-                        {/* Quantity */}
-                        <div className="flex-[2]">
-                          <Input
-                            type="number"
-                            placeholder="Qty"
-                            className="w-full rounded-lg"
-                            value={item.quantity || ""}
-                            onChange={(e) => {
-                              const updated = [...form.mealIngredients];
-                              updated[index] = {
-                                ...updated[index],
-                                quantity: Number(e.target.value) || 0,
-                              };
-                              setForm({ ...form, mealIngredients: updated });
-                            }}
-                          />
-                        </div>
+                      {/* Quantity */}
+                      <div className="flex-[2]">
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          className="w-full rounded-lg"
+                          {...register(`mealIngredients.${index}.quantity`, {
+                            valueAsNumber: true,
+                          })}
+                        />
+                      </div>
 
-                        {/* Unit - display only */}
-                        <div className="flex-[2]">
-                          <div
-                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 
-                    bg-gray-100 dark:bg-gray-800 text-center text-sm text-gray-700 
-                    dark:text-gray-300"
-                          >
-                            {item.unit || "unit"}
-                          </div>
-                        </div>
-
-                        {/* Delete Button */}
-                        <div className="flex-[1] flex justify-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeIngredient(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            <Trash className="w-5 h-5" />
-                          </Button>
+                      {/* Unit - display only */}
+                      <div className="flex-[2]">
+                        <div className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-center text-sm text-gray-700 dark:text-gray-300">
+                          {watch(`mealIngredients.${index}.unit`) || "unit"}
                         </div>
                       </div>
+
+                      {/* Delete Button */}
+                      <div className="flex-[1] flex justify-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeIngredient(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash className="w-5 h-5" />
+                        </Button>
+                      </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
                 <Button
                   type="button"
                   variant="outline"
@@ -699,29 +669,22 @@ const AddMealForm = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                {form.mealInstructions.map((item, index) => (
-                  <div key={index} className="flex gap-2 items-center">
+                {instructionFields.map((field, index) => (
+                  <div key={field.id} className="flex gap-2 items-center">
                     <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
-                      {item.step}
+                      {index + 1}
                     </div>
                     <Input
                       type="text"
                       placeholder="Type instruction"
                       className="flex-1"
-                      value={item.instruction}
-                      onChange={(e) =>
-                        handleInstructionChange(
-                          index,
-                          "instruction",
-                          e.target.value
-                        )
-                      }
+                      {...register(`mealInstructions.${index}.instruction`)}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeInstruction(index)}
+                      onClick={() => handleRemoveInstruction(index)}
                       className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <Trash className="w-5 h-5" />
@@ -743,9 +706,8 @@ const AddMealForm = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            {/* Add meal button */}
             <Button
-              onClick={handleSubmit}
+              onClick={handleSubmit(onSubmit)}
               disabled={loading}
               className="w-full h-12 bg-gradient-to-r text-base from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2"
             >
@@ -753,7 +715,6 @@ const AddMealForm = () => {
               {loading ? "Adding..." : "Add Meal"}
             </Button>
 
-            {/* Cancel button */}
             <Button
               variant="outline"
               onClick={() => window.history.back()}
@@ -767,6 +728,4 @@ const AddMealForm = () => {
       </div>
     </div>
   );
-};
-
-export default AddMealForm;
+}

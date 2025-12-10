@@ -175,7 +175,7 @@ export interface UpsertMealRequest {
   cookingTime: string;
   servings: number;
   nutrition?: string[];
-  categoryName?: string[];
+  categories?: number[];
 }
 
 export interface MealPlanTemplate {
@@ -233,6 +233,21 @@ export interface IngredientResponse {
 
 export interface PaginatedIngredients {
   content: IngredientResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface CategoryResponse {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CategoryResponseList {
+  content: CategoryResponse[];
   totalElements: number;
   totalPages: number;
   number: number;

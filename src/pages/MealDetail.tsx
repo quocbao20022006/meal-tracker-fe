@@ -26,30 +26,6 @@ export default function MealDetail() {
   const [checkedList, setCheckedList] = useState<boolean[]>([]);
   const [editing, setEditing] = useState(false);
 
-  // Handle toasts
-  const [toasts, setToasts] = useState<
-    {
-      id: number;
-      title: string;
-      description?: string;
-      variant?: "default" | "destructive";
-    }[]
-  >([]);
-
-  const showToast = (
-    title: string,
-    description?: string,
-    variant: "default" | "destructive" = "default"
-  ) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, title, description, variant }]);
-
-    // Tự động remove sau 3s
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
-  };
-
   // Get meal details data
   useEffect(() => {
     const fetchMeal = async () => {
