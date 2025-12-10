@@ -4,8 +4,10 @@ import {
   Salad,
   Plus,
   Clock,
-  User,
-  BatteryCharging,
+  CookingPot,
+  Zap,
+  Utensils,
+  ChefHat,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMealPlans } from "../hooks/useMealPlans";
@@ -13,6 +15,8 @@ import { MealResponse } from "../types";
 import { getMealById, getSimilarMeals } from "../services/meal.service";
 import SimilarRecipes from "../components/SimilarRecipes";
 import MealEditModal from "../components/MealEditModal";
+import InfoTag from "@/components/InfoTag";
+import IngredientCard from "@/components/IngredientCard";
 
 export default function MealDetail() {
   const { id } = useParams();
@@ -132,59 +136,58 @@ export default function MealDetail() {
       <div className="flex justify-start gap-10 max-w-8xl mx-auto p-6 bg-gray-50 dark:bg-gray-900">
         {/* Meal main info */}
         <div className="w-3/4">
-          {/* Meal info */}
-          <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl">
-            <div className="w-1/3">
+          <div className="p-5 mb-10 flex items-stretch gap-10 border-emerald-400 border rounded-2xl bg-white dark:bg-gray-800">
+            {/* Image */}
+            <div className="w-1/2">
               <img
                 src={meal.imageUrl ?? ""}
                 alt=""
                 className="w-full h-[340px] rounded-2xl object-cover"
               />
             </div>
-            <div className="w-2/3 flex flex-col justify-between">
+
+            {/* Meal info */}
+            <div className="w-1/2 flex flex-col justify-start">
               <h1 className="mb-5 text-3xl font-bold text-gray-900 dark:text-white">
                 {meal.name}
               </h1>
-              <p className="mb-5 dark:text-white">{meal.description}</p>
-              <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                <Clock className="w-5" />
-                <span className="">Cooking time: {meal.cookingTime}</span>
-              </div>
-              <div className="flex justify-between gap-5 mb-5 text-gray-900 dark:text-white">
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <User className="w-5" />
-                  <span>Servings: {meal.servings}</span>
-                </div>
-                <div className="flex gap-2 font-bold text-gray-900 dark:text-white">
-                  <BatteryCharging className="w-5" />
-                  <span>Total calories: {meal.calories} Kcal</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 dark:text-white">
-                  Categories:{" "}
-                </span>
+              <div className="flex flex-wrap items-center justify-start gap-2 mb-5">
+                {/* Category */}
                 {meal.categoryName?.map((cat) => (
-                  <span
-                    key={cat}
-                    className="px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize"
-                  >
-                    {cat}
-                  </span>
+                  <InfoTag icon="" value={cat} />
                 ))}
+                {/* Calories */}
+                <InfoTag
+                  icon={<Zap className="w-4" />}
+                  value={meal.calories.toPrecision().toString() + " kcal"}
+                />
+                {/* Cooking time */}
+                <InfoTag
+                  icon={<Clock className="w-4" />}
+                  value={meal.cookingTime}
+                />
+                {/* Servings */}
+                <InfoTag
+                  icon={<Utensils className="w-4" />}
+                  value={meal.servings + " servings"}
+                />
               </div>
+
+              <h3 className="font-bold mb-1">Description:</h3>
+              <p className="mb-5 dark:text-white">{meal.description}</p>
             </div>
           </div>
 
-          {/* Meal ingredients & instructions */}
-          <div className="flex items-start gap-10">
-            {/* Ingredients */}
-            <div className="w-1/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="flex justify-between items-start gap-5">
+            {/* Meal ingredients */}
+            <div className="mb-10 w-1/3 border border-emerald-400 p-5 rounded-2xl bg-white dark:bg-gray-800">
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <ChefHat />
                 Ingredients
               </h2>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 ml-1">
                 {meal.mealIngredients.map((item, index) => (
+                  // <IngredientCard name={item.ingredientName} quantity={Number(item.quantity)} unit={item.unit} />
                   <label
                     key={index}
                     className="flex items-center gap-3 cursor-pointer text-gray-700 dark:text-gray-200"
@@ -208,9 +211,9 @@ export default function MealDetail() {
             </div>
 
             {/* Instructions */}
-            <div className="w-2/3 p-5 border-emerald-400 border rounded-2xl">
-              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">
-                Instructions
+            <div className="mb-10 w-2/3 border border-emerald-400 p-5 rounded-2xl bg-white dark:bg-gray-800">
+              <h2 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <CookingPot /> Instructions
               </h2>
               {meal?.mealInstructions?.length ? (
                 meal.mealInstructions.map((s) => (

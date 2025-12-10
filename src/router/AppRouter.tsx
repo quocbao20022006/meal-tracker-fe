@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from "react-hot-toast";
 import { useAuthContext } from '../contexts/AuthContext';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
@@ -17,6 +18,7 @@ import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
 import Sidebar from '../components/Sidebar';
 import AddMealForm from '@/components/AddMealForm';
+import AppToaster from '@/components/AppToaster';
 
 function AppRoutes() {
   const { user, authLoading, hasProfile } = useAuthContext();
@@ -73,6 +75,7 @@ function AppRoutes() {
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <AppToaster />
       <AppRoutes />
     </BrowserRouter>
   );

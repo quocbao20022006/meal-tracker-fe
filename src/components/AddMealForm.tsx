@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Plus, X, ChefHat, ArrowLeft, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +62,7 @@ interface MealFormData {
 
 export default function AddMealForm() {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [allCategories, setAllCategories] = useState<CategoryResponse[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<
@@ -305,7 +308,7 @@ export default function AddMealForm() {
         console.error("No data returned from API");
         return;
       } else {
-        alert("Meal added successfully!");
+        toast.success("Created new meal successfully!");
 
         // Reset form
         reset();
@@ -341,6 +344,16 @@ export default function AddMealForm() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header Bar */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <button
+          onClick={() => navigate("/meals")}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-emerald-600 transition-all"
+        >
+          <ArrowLeft className="w-5 h-5" /> <span>Back</span>
+        </button>
+      </div>
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8 flex items-center gap-3">
           <div className="p-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg">
