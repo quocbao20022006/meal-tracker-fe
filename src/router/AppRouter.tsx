@@ -16,6 +16,7 @@ import HistoryPage from '../pages/History';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
 import Sidebar from '../components/Sidebar';
+import AddMealForm from '@/components/AddMealForm';
 
 function AppRoutes() {
   const { user, authLoading, hasProfile } = useAuthContext();
@@ -56,14 +57,14 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/meals" element={<Meals />} />
-        <Route path="/meals/:id" element={<MealDetail />} />
+        <Route path="/meal/:id" element={<MealDetail />} />
+        <Route path='/add-meal' element={<AddMealForm />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/plans" element={<Plans />} />
         <Route path="/plans/:planId" element={<PlanDetail />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
