@@ -10,16 +10,16 @@ import {
 
 export const getAllMealPlans = async (params: MealPlanRequest) => {
   return httpClient.get<PaginatedMealPlans>(
-    `/mealplan/all?userId=${params.userId}`
+    `/meal-plan/all?userId=${params.userId}`
   );
 };
 
 export const getMealPlanById = async (id: number) => {
-  return httpClient.get<MealPlan>(`/meal-plans/${id}`);
+  return httpClient.get<MealPlanResponse>(`/meal-plan/detail/${id}`);
 };
 
 export const getMealPlansByDate = async (date: string) => {
-  return httpClient.get<MealPlan[]>(`/meal-plans?date=${date}`);
+  return httpClient.get<MealPlanResponse[]>(`/meal-plans?date=${date}`);
 };
 
 export const getMealPlansByDateRange = async (
@@ -32,23 +32,23 @@ export const getMealPlansByDateRange = async (
 };
 
 export const createMealPlan = async (request: CreateMealPlanRequest) => {
-  return httpClient.post<MealPlanResponse>("/mealplan/add", request);
+  return httpClient.post<MealPlanResponse>("/meal-plan/add", request);
 };
 
 export const updateMealPlan = async (
   id: number,
   request: UpdateMealPlanRequest
 ) => {
-  return httpClient.put<MealPlan>(`/meal-plans/${id}`, request);
+  return httpClient.put<MealPlan>(`/meal-plan/update/${id}`, request);
 };
 
 export const deleteMealPlan = async (id: number) => {
-  return httpClient.httpDelete(`/meal-plans/${id}`);
+  return httpClient.httpDelete(`/meal-plan/delete/${id}`);
 };
 
-export const completeMealPlan = async (id: number) => {
-  return updateMealPlan(id, { completed: true });
-};
+// export const completeMealPlan = async (id: number) => {
+//   return updateMealPlan(id, { completed: true });
+// };
 
 export const getWeekMealPlans = async (startDate: string) => {
   const endDate = new Date(startDate);

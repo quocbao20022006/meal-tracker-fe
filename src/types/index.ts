@@ -163,6 +163,15 @@ export interface CreateMealPlanRequest {
   isActive: boolean;
 }
 
+export interface UpdateMealPlanRequest {
+  name: string;
+  targetCalories?: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  isActive: boolean;
+  planType: PlanType;
+}
 export interface UpsertMealRequest {
   mealName: string;
   mealDescription?: string | null;
@@ -188,6 +197,21 @@ export enum PlanType {
   MONTHLY,
 }
 
+// Meal Type
+export enum MealType {
+  BREAKFAST = "BREAKFAST",
+  LUNCH = "LUNCH",
+  SNACK = "SNACK",
+  DINNER = "DINNER",
+}
+
+export const MEAL_TYPES: { [key: string]: string } = {
+  [MealType.BREAKFAST]: "Breakfast",
+  [MealType.DINNER]: "Dinner",
+  [MealType.LUNCH]: "Lunch",
+  [MealType.SNACK]: "Snack",
+};
+
 export interface MealPlanRequest {
   userId?: number;
 }
@@ -210,6 +234,31 @@ export interface PaginatedMealPlans {
   content: MealPlanResponse[];
 }
 
+export interface MealPlanItemRequest {
+  date?: string;
+  mealPlanId?: number;
+}
+
+export interface PaginatedMealPlanItems {
+  content: MealPlanItemResponse[];
+}
+
+export interface MealPlanItemResponse {
+  id: number;
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
+  meal: MealResponse;
+  mealPlan: MealPlanResponse;
+}
+
+export interface CreateMealPlanItemRequest {
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
+}
 export interface UpdateMealPlanTemplateRequest {
   name?: string;
   description?: string;
@@ -219,7 +268,6 @@ export interface UpdateMealPlanTemplateRequest {
   isActive?: boolean;
   completed?: boolean;
 }
-
 export interface ApiError {
   message: string;
   status: number;

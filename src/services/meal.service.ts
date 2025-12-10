@@ -1,8 +1,8 @@
-import * as httpClient from '../lib/http-client';
-import { MealResponse, PaginatedMeals, UpsertMealRequest } from '../types';
+import * as httpClient from "../lib/http-client";
+import { MealResponse, PaginatedMeals, UpsertMealRequest } from "../types";
 
 export const getAllMeals = async (page: number = 0) => {
-  return httpClient.get<PaginatedMeals>('/meal/all?page=' + page);
+  return httpClient.get<PaginatedMeals>("/meal/all?page=" + page);
 };
 
 export const getMealById = async (id: number) => {
@@ -11,18 +11,23 @@ export const getMealById = async (id: number) => {
 
 export const getSimilarMeals = async (id: number) => {
   return httpClient.get<MealResponse>(`/meal/${id}/recommendations`);
-}
-
-export const getMealsByCategory = async (category: string, page: number = 0) => {
-  return httpClient.get<PaginatedMeals>(`/meal/filter?category=${category}&page=${page}`);
 };
 
-export const searchMeals = async (query: string) => {
-  return httpClient.get<MealResponse[]>(`/meal/search?query=${query}`);
+export const getMealsByCategory = async (
+  category: string,
+  page: number = 0
+) => {
+  return httpClient.get<PaginatedMeals>(
+    `/meal/filter?category=${category}&page=${page}`
+  );
+};
+
+export const searchMeals = async (mealName: string) => {
+  return httpClient.get<PaginatedMeals>(`/meal/filter?mealName=${mealName}`);
 };
 
 export const createMeal = async (meal: UpsertMealRequest) => {
-  return httpClient.post<MealResponse>('/meal/add', meal);
+  return httpClient.post<MealResponse>("/meal/add", meal);
 };
 
 export const updateMeal = async (id: number, meal: UpsertMealRequest) => {
@@ -35,13 +40,22 @@ export const updateMeal = async (id: number, meal: UpsertMealRequest) => {
   formData.append("servings", String(meal.servings ?? 1));
 
   (meal.mealIngredients ?? []).forEach((ing, idx) => {
-    formData.append(`mealIngredients[${idx}].ingredientId`, String(ing.ingredientId ?? ""));
-    formData.append(`mealIngredients[${idx}].quantity`, String(ing.quantity ?? ""));
+    formData.append(
+      `mealIngredients[${idx}].ingredientId`,
+      String(ing.ingredientId ?? "")
+    );
+    formData.append(
+      `mealIngredients[${idx}].quantity`,
+      String(ing.quantity ?? "")
+    );
   });
 
   (meal.mealInstructions ?? []).forEach((ins, idx) => {
     formData.append(`mealInstructions[${idx}].step`, String(ins.step ?? ""));
-    formData.append(`mealInstructions[${idx}].instruction`, ins.instruction ?? "");
+    formData.append(
+      `mealInstructions[${idx}].instruction`,
+      ins.instruction ?? ""
+    );
   });
 
   (meal.nutrition ?? []).forEach((item, idx) => {
