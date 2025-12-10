@@ -7,16 +7,30 @@ import { UserProfile, CreateUserProfileRequest, UpdateUserProfileRequest } from 
  * Hook để quản lý User Profile
  */
 export function useUserProfile(userId: number) {
-  const { data: profile, loading, error, execute: fetchProfile } = useFetch<UserProfile>(
+  const { data: profile, loading, error, execute: fetchProfile, setData } = useFetch<UserProfile>(
     () => userProfileService.getProfile(userId)
   );
 
   const createProfile = useMutation<UserProfile>(async (request: CreateUserProfileRequest) => {
-    return userProfileService.createProfile(request);
+    const result = await userProfileService.createProfile(request);
+
+    // Update local state if successful
+    if (result.data) {
+      setData(result.data);
+    }
+
+    return result;
   });
 
   const updateProfile = useMutation<UserProfile>(async (request: UpdateUserProfileRequest) => {
-    return userProfileService.updateProfile(userId, request);
+    const result = await userProfileService.updateProfile(userId, request);
+
+    // Update local state if successful
+    if (result.data) {
+      setData(result.data);
+    }
+
+    return result;
   });
 
   const calculateBMI = useCallback((weight: number, height: number) => {
@@ -27,27 +41,21 @@ export function useUserProfile(userId: number) {
     return userProfileService.getBMICategory(bmi);
   }, []);
 
-  const calculateDailyCalories = useCallback(
-    (weight: number, height: number, age: number, gender: string) => {
-      return userProfileService.calculateDailyCalories(weight, height, age, gender);
-    },
-    []
-  );
-
   return {
     profile,
     loading,
     error,
     fetchProfile,
-    
+
     createProfile: createProfile.mutate,
     createProfileLoading: createProfile.loading,
-    
+    createProfileError: createProfile.error,
+
     updateProfile: updateProfile.mutate,
     updateProfileLoading: updateProfile.loading,
-    
+    updateProfileError: updateProfile.error,
+
     calculateBMI,
     getBMICategory,
-    calculateDailyCalories,
   };
 }

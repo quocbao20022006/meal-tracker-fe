@@ -48,29 +48,67 @@ export interface UserProfile {
   userId: number;
   height: number;
   weight: number;
-  age: number;
+  weightGoal?: number;
+  birthDate: string; // Changed from age to birthDate
+  age?: number; // Computed field
   gender: "male" | "female" | "other";
   bmi: number;
   bmiCategory: string;
   dailyCalorieGoal: number;
+  activityLevel?: string;
+  goal?: string;
+  weightDifference?: number;
+  goalAchieved?: boolean;
   updatedAt: string;
 }
 
 export interface CreateUserProfileRequest {
   height: number;
   weight: number;
-  age: number;
+  weightGoal?: number;
+  birthDate: string; // Changed from age to birthDate
   gender: "male" | "female" | "other";
-  dailyCalorieGoal: number;
+  activityLevel?: string;
+  goal?: string;
 }
 
 export interface UpdateUserProfileRequest {
   height?: number;
   weight?: number;
-  age?: number;
+  weightGoal?: number;
+  birthDate?: string; // Changed from age to birthDate
   gender?: "male" | "female" | "other";
-  dailyCalorieGoal?: number;
+  activityLevel?: string;
+  goal?: string;
 }
+
+// Helper để validate BMI cho weight goal
+export interface BMIValidation {
+  isValid: boolean;
+  message: string;
+  recommendedMinWeight: number;
+  recommendedMaxWeight: number;
+  bmiAtGoal: number;
+}
+
+// Activity Level Options
+export const ACTIVITY_LEVELS = {
+  sedentary: "Sedentary (little or no exercise)",
+  light: "Light (exercise 1-3 days/week)",
+  moderate: "Moderate (exercise 3-5 days/week)",
+  active: "Active (exercise 6-7 days/week)",
+  very_active: "Very Active (intense exercise daily)",
+} as const;
+
+export type ActivityLevel = keyof typeof ACTIVITY_LEVELS;
+
+export const GOAL_OPTIONS = {
+  lose_weight: "Lose Weight",
+  maintain: "Maintain Weight",
+  gain_weight: "Gain Weight",
+} as const;
+
+export type GoalType = keyof typeof GOAL_OPTIONS;
 
 export interface MealResponse {
   id: number;
@@ -78,8 +116,11 @@ export interface MealResponse {
   meal_description: string | null;
   image_url: string | null;
   meal_ingredients: {
-    ingredient_name: string;
+    ingredientId: number;
+    ingredientName: string;
     quantity: number;
+    description?: string;
+    unit?: string;
   }[];
   meal_instructions: {
     step: number;
@@ -122,9 +163,23 @@ export interface CreateMealPlanRequest {
   isActive: boolean;
 }
 
-export interface UpdateMealPlanRequest {
-  servings?: number;
-  completed?: boolean;
+export interface UpsertMealRequest {
+  mealName: string;
+  mealDescription?: string | null;
+  image?: File | null;
+  mealIngredients: {
+    ingredientId: number;
+    quantity: number;
+    unit?: string;
+  }[];
+  mealInstructions: {
+    step: number;
+    instruction: string;
+  }[];
+  cookingTime: string;
+  servings: number;
+  nutrition?: string[];
+  categoryName?: string[];
 }
 
 // Meal Plan
@@ -162,6 +217,7 @@ export interface UpdateMealPlanTemplateRequest {
   startDate?: string;
   endDate?: string;
   isActive?: boolean;
+  completed?: boolean;
 }
 
 export interface ApiError {
@@ -174,4 +230,21 @@ export interface ApiResponse<T> {
   data: T | null;
   error: ApiError | null;
   loading?: boolean;
+}
+
+export interface IngredientResponse {
+  id: number;
+  name: string;
+  calories: number;
+  description: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface PaginatedIngredients {
+  content: IngredientResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 }

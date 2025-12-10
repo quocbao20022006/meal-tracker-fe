@@ -17,12 +17,12 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     if (mealPlans && mealPlans.length > 0) {
       const filtered = mealPlans.filter(mp => mp.date === today);
       setTodayMeals(filtered);
     }
-    
+
     setLoading(mealsLoading || profileLoading);
   };
 

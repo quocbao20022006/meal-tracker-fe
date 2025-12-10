@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { User, Scale, Calendar, Users } from 'lucide-react';
+import { User, Scale, Calendar, Users, Activity, Target, AlertCircle } from 'lucide-react';
+import { ACTIVITY_LEVELS, GOAL_OPTIONS, ActivityLevel, GoalType } from '../types';
+import { validateWeightGoal, calculateBMI, getBMICategory } from '../utils/bmiHelper';
+import { calculateAge } from '../services/user-profile.service';
 
 export default function Onboarding() {
   const { user, refreshAuth } = useAuthContext();
@@ -11,23 +14,27 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [weightGoalWarning, setWeightGoalWarning] = useState('');
 
   const [formData, setFormData] = useState({
     height: '',
     weight: '',
-    age: '',
+    weightGoal: '',
+    birthDate: '',
     gender: 'male' as 'male' | 'female' | 'other',
-    dailyCalorieGoal: ''
+    activityLevel: 'moderate' as ActivityLevel,
+    goal: 'maintain' as GoalType,
   });
 
-  const calculateDailyCalories = (weight: number, height: number, age: number, gender: string) => {
-    let bmr: number;
-    if (gender === 'male') {
-      bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+  const handleWeightGoalChange = (value: string) => {
+    setFormData({ ...formData, weightGoal: value });
+
+    if (value && formData.height) {
+      const validation = validateWeightGoal(parseFloat(formData.height), parseFloat(value));
+      setWeightGoalWarning(validation.message);
     } else {
-      bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+      setWeightGoalWarning('');
     }
-    return Math.round(bmr * 1.375);
   };
 
   const handleSubmit = async () => {
@@ -37,29 +44,44 @@ export default function Onboarding() {
     try {
       const weight = parseFloat(formData.weight);
       const height = parseFloat(formData.height);
-      const age = parseInt(formData.age);
+      const weightGoal = formData.weightGoal ? parseFloat(formData.weightGoal) : undefined;
 
-      if (!weight || !height || !age) {
-        setError('Please fill in all fields with valid numbers');
+      if (!weight || !height || !formData.birthDate) {
+        setError('Please fill in all required fields with valid values');
         setLoading(false);
         return;
       }
 
-      const dailyCalories = calculateDailyCalories(weight, height, age, formData.gender);
+      // Validate birth date
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      if (birthDate >= today) {
+        setError('Birth date must be in the past');
+        setLoading(false);
+        return;
+      }
+
+      // Check minimum age (e.g., 10 years old)
+      const age = calculateAge(formData.birthDate);
+      if (age < 10) {
+        setError('You must be at least 10 years old');
+        setLoading(false);
+        return;
+      }
 
       await createProfile({
         height,
         weight,
-        age,
+        weightGoal,
+        birthDate: formData.birthDate,
         gender: formData.gender,
-        dailyCalorieGoal: dailyCalories
+        activityLevel: formData.activityLevel,
+        goal: formData.goal,
       });
 
-      // Mark profile as created
       localStorage.setItem('hasProfile', 'true');
       refreshAuth();
-      
-      // Navigate to dashboard
+
       setTimeout(() => {
         navigate('/dashboard');
       }, 100);
@@ -70,25 +92,67 @@ export default function Onboarding() {
   };
 
   const handleNext = () => {
-    if (step === 1 && !formData.height) {
-      setError('Please enter your height');
-      return;
-    }
-    if (step === 2 && !formData.weight) {
-      setError('Please enter your weight');
-      return;
-    }
-    if (step === 3 && !formData.age) {
-      setError('Please enter your age');
-      return;
-    }
     setError('');
-    if (step < 4) {
+
+    // Validate theo từng bước
+    if (step === 1) {
+      if (!formData.height || parseFloat(formData.height) <= 0) {
+        setError('Please enter a valid height');
+        return;
+      }
+    }
+
+    if (step === 2) {
+      if (!formData.weight || parseFloat(formData.weight) <= 0) {
+        setError('Please enter a valid weight');
+        return;
+      }
+    }
+
+    // Step 3 (weight goal) là optional, không cần validate
+
+    if (step === 4) {
+      if (!formData.birthDate) {
+        setError('Please enter your birth date');
+        return;
+      }
+
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+
+      if (birthDate >= today) {
+        setError('Birth date must be in the past');
+        return;
+      }
+
+      const age = calculateAge(formData.birthDate);
+      if (age < 10) {
+        setError('You must be at least 10 years old');
+        return;
+      }
+
+      if (age > 150) {
+        setError('Please enter a valid birth date');
+        return;
+      }
+    }
+
+    // Nếu validation pass, chuyển sang bước tiếp theo hoặc submit
+    if (step < 6) {
       setStep(step + 1);
     } else {
       handleSubmit();
     }
   };
+
+  const totalSteps = 6;
+  const currentBMI = formData.height && formData.weight
+    ? calculateBMI(parseFloat(formData.weight), parseFloat(formData.height))
+    : 0;
+  const currentBMICategory = currentBMI > 0 ? getBMICategory(currentBMI) : '';
+
+  // Calculate age for display if birthDate is entered
+  const displayAge = formData.birthDate ? calculateAge(formData.birthDate) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -104,19 +168,18 @@ export default function Onboarding() {
             Complete Your Profile
           </h1>
           <p className="text-center text-gray-600 dark:text-gray-300 mb-8">
-            Step {step} of 4
+            Step {step} of {totalSteps}
           </p>
 
           <div className="mb-6">
             <div className="flex gap-2">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className={`h-2 flex-1 rounded-full transition-all ${
-                    i <= step
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
-                  }`}
+                  className={`h-2 flex-1 rounded-full transition-all ${i <= step
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
+                    : 'bg-gray-200 dark:bg-gray-700'
+                    }`}
                 />
               ))}
             </div>
@@ -129,10 +192,11 @@ export default function Onboarding() {
           )}
 
           <div className="space-y-6">
+            {/* Step 1: Height */}
             {step === 1 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Height (cm)
+                  Height (cm) *
                 </label>
                 <div className="relative">
                   <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -142,15 +206,18 @@ export default function Onboarding() {
                     onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
                     placeholder="e.g., 175"
+                    min="100"
+                    max="250"
                   />
                 </div>
               </div>
             )}
 
+            {/* Step 2: Current Weight */}
             {step === 2 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Weight (kg)
+                  Current Weight (kg) *
                 </label>
                 <div className="relative">
                   <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -160,50 +227,157 @@ export default function Onboarding() {
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
                     placeholder="e.g., 70"
+                    min="30"
+                    max="300"
                   />
                 </div>
+                {formData.height && formData.weight && (
+                  <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Your current BMI: <span className="font-bold">{currentBMI.toFixed(1)}</span>
+                      <span className="ml-2 text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-700">
+                        {currentBMICategory}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
+            {/* Step 3: Weight Goal */}
             {step === 3 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Age
+                  Target Weight (kg) - Optional
+                </label>
+                <div className="relative">
+                  <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="number"
+                    value={formData.weightGoal}
+                    onChange={(e) => handleWeightGoalChange(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    placeholder="e.g., 65 (optional)"
+                    min="30"
+                    max="300"
+                  />
+                </div>
+                {weightGoalWarning && (
+                  <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 ${weightGoalWarning.includes('✅')
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                    : 'bg-orange-50 dark:bg-orange-900/20'
+                    }`}>
+                    <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${weightGoalWarning.includes('✅')
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-orange-600 dark:text-orange-400'
+                      }`} />
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {weightGoalWarning}
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Leave empty if you don't have a specific weight goal
+                </p>
+              </div>
+            )}
+
+            {/* Step 4: Birth Date */}
+            {step === 4 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Birth Date *
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type="number"
-                    value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    max={new Date().toISOString().split('T')[0]}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                    placeholder="e.g., 25"
                   />
+                </div>
+                {displayAge !== null && (
+                  <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Your age: <span className="font-bold">{displayAge} years old</span>
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  We calculate your age from your birth date
+                </p>
+              </div>
+            )}
+
+            {/* Step 5: Gender & Activity Level */}
+            {step === 5 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Gender *
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['male', 'female', 'other'] as const).map((gender) => (
+                      <button
+                        key={gender}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, gender })}
+                        className={`p-4 rounded-xl border-2 transition-all ${formData.gender === gender
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
+                          }`}
+                      >
+                        <Users className="w-6 h-6 mx-auto mb-2 text-gray-600 dark:text-gray-300" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+                          {gender}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Activity Level *
+                  </label>
+                  <select
+                    value={formData.activityLevel}
+                    onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value as ActivityLevel })}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                  >
+                    {Object.entries(ACTIVITY_LEVELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}
 
-            {step === 4 && (
+            {/* Step 6: Goal */}
+            {step === 6 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Gender
+                  What's your goal? *
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {(['male', 'female', 'other'] as const).map((gender) => (
+                <div className="space-y-3">
+                  {Object.entries(GOAL_OPTIONS).map(([key, label]) => (
                     <button
-                      key={gender}
+                      key={key}
                       type="button"
-                      onClick={() => setFormData({ ...formData, gender })}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        formData.gender === gender
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
-                      }`}
+                      onClick={() => setFormData({ ...formData, goal: key as GoalType })}
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${formData.goal === key
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
+                        }`}
                     >
-                      <Users className="w-6 h-6 mx-auto mb-2 text-gray-600 dark:text-gray-300" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                        {gender}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {label}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -225,7 +399,7 @@ export default function Onboarding() {
               disabled={loading || createProfileLoading}
               className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading || createProfileLoading ? 'Saving...' : step === 4 ? 'Complete' : 'Next'}
+              {loading || createProfileLoading ? 'Saving...' : step === 6 ? 'Complete' : 'Next'}
             </button>
           </div>
         </div>
