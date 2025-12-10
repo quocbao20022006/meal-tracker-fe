@@ -1,125 +1,153 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
-import Header from '../components/Header';
-import MealCard from '../components/MealCard';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MealPlan, MealResponse, MealPlanTemplate } from '../types';
-import * as mealService from '../services/meal.service';
-import * as mealPlanService from '../services/meal-plan.service';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  Flame,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import Header from "../components/Header";
+import MealCard from "../components/MealCard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CreateMealPlanItemRequest,
+  MEAL_TYPES,
+  MealPlanItemResponse,
+  MealPlanResponse,
+  MealResponse,
+  MealType,
+} from "../types";
+import * as mealService from "../services/meal.service";
+import * as mealPlanService from "../services/meal-plan.service";
+import * as mealPlanItemService from "../services/meal-plan-item.service";
+import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "@/hooks/use-toast";
 
 export default function PlanDetail() {
   const navigate = useNavigate();
   const { planId } = useParams<{ planId: string }>();
-  
-  const [plan, setPlan] = useState<MealPlanTemplate | null>(null);
-  const [meals, setMeals] = useState<MealPlan[]>([]);
+
+  const [plan, setPlan] = useState<MealPlanResponse | null>(null);
+  const [mealPlanItems, setMealPlanItems] = useState<MealPlanItemResponse[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [showAddMealModal, setShowAddMealModal] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState<string>('breakfast');
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedMealType, setSelectedMealType] = useState<MealType>(
+    MealType.BREAKFAST
+  );
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const [selectedMeal, setSelectedMeal] = useState<MealResponse | null>(null);
-  const [servings, setServings] = useState(1);
+  // const [servings, setServings] = useState(1);
   const [availableMeals, setAvailableMeals] = useState<MealResponse[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateIndex, setDateIndex] = useState<number>(0);
 
-  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  // Helper function to get week dates
-  const getWeekDates = (date: Date) => {
-    const curr = new Date(date);
-    const first = curr.getDate() - curr.getDay();
-    const week = [];
-
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(curr);
-      day.setDate(first + i);
-      week.push(day);
+  const loadMeals = async (mealName: string) => {
+    const res = await mealService.searchMeals(mealName);
+    if (res.data) {
+      setAvailableMeals(res.data.content);
+    } else {
+      setAvailableMeals([]);
     }
-
-    return week;
   };
 
-  const [weekDates, setWeekDates] = useState(getWeekDates(new Date(selectedDate)));
+  useEffect(() => {
+    if (debouncedSearch) {
+      loadMeals(debouncedSearch);
+    }
+  }, [debouncedSearch]);
+
+  // Helper function to get week dates
+  const getWeekDates = (startDate: Date, endDate: Date) => {
+    const dateArray = [];
+    let current = startDate;
+    while (current <= endDate) {
+      dateArray.push(new Date(current)); // push clone của ngày hiện tại
+      current.setDate(current.getDate() + 1); // tăng thêm 1 ngày
+    }
+    return dateArray;
+  };
+
+  const [weekDates, setWeekDates] = useState(
+    getWeekDates(new Date(), new Date())
+  );
 
   useEffect(() => {
     loadPlanDetails();
     loadAvailableMeals();
-    setWeekDates(getWeekDates(new Date(selectedDate)));
   }, [planId]);
 
+  useEffect(() => {
+    loadDateRange();
+  }, [plan?.id]);
+
+  const loadDateRange = () => {
+    if (plan) {
+      const dateRange = getWeekDates(
+        new Date(plan.startDate),
+        new Date(plan.endDate)
+      );
+      setWeekDates(dateRange);
+      setSelectedDate(plan.startDate);
+    }
+  };
+
   const loadPlanDetails = async () => {
+    if (!planId) return;
     setLoading(true);
     try {
-      // Mock data for demo - replace with API call
-      const mockPlan: MealPlanTemplate = {
-        id: parseInt(planId || '1'),
-        userId: 1,
-        name: planId === '1' ? 'Summer Diet Plan' : 'Winter Fitness Goal',
-        description: planId === '1' ? 'Lose weight and get fit' : 'Build muscle and strength',
-        goal: planId === '1' ? 'Lose weight' : 'Build muscle',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setPlan(mockPlan);
+      const result = await mealPlanService.getMealPlanById(+planId);
 
-      // Mock meals for the plan
-      const mockMeals: MealPlan[] = [
-        {
-          id: 1,
-          userId: 1,
-          mealId: 1,
-          date: new Date().toISOString().split('T')[0],
-          mealType: 'breakfast',
-          servings: 1,
-          completed: false,
-          meal: {
-            id: 1,
-            meal_name: 'Oatmeal with Berries',
-            meal_description: 'Healthy oatmeal breakfast',
-            image_url: null,
-            meal_ingredients: [],
-            meal_instructions: [],
-            cooking_time: '10 mins',
-            calories: 350,
-            servings: 1,
-            nutrition: [],
-            category_name: ['Breakfast'],
-          },
-        },
-        {
-          id: 2,
-          userId: 1,
-          mealId: 2,
-          date: new Date().toISOString().split('T')[0],
-          mealType: 'lunch',
-          servings: 1,
-          completed: false,
-          meal: {
-            id: 2,
-            meal_name: 'Grilled Chicken Salad',
-            meal_description: 'Fresh grilled chicken with mixed greens',
-            image_url: null,
-            meal_ingredients: [],
-            meal_instructions: [],
-            cooking_time: '15 mins',
-            calories: 450,
-            servings: 1,
-            nutrition: [],
-            category_name: ['Lunch'],
-          },
-        },
-      ];
-      setMeals(mockMeals);
+      if (result.error) {
+        alert(result.error.message || "Failed to fetch meals");
+        return;
+      }
+
+      setPlan(result.data);
+      await loadMealPlanItems();
     } catch (err) {
-      console.error('Error loading plan details:', err);
+      console.error("Error loading plan details:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMealPlanItems = async () => {
+    if (!planId) return;
+    setLoading(true);
+    try {
+      const getMealPlanItemsResult =
+        await mealPlanItemService.getMealPlanItemsByDate({
+          mealPlanId: +planId,
+          date: selectedDate,
+        });
+      setMealPlanItems(getMealPlanItemsResult?.data?.content || []);
+    } catch (err) {
+      console.error("Error loading plan details:", err);
     } finally {
       setLoading(false);
     }
@@ -132,69 +160,52 @@ export default function PlanDetail() {
         setAvailableMeals(result.data.content);
       }
     } catch (err) {
-      console.error('Error loading meals:', err);
+      console.error("Error loading meals:", err);
     }
   };
 
   const handleAddMeal = async () => {
-    if (!selectedMeal) return;
+    if (!selectedMeal || !planId) return;
 
     try {
-      const request = {
+      const request: CreateMealPlanItemRequest = {
+        mealPlanId: +planId,
         mealId: selectedMeal.id,
-        date: selectedDate,
+        mealDate: selectedDate,
         mealType: selectedMealType,
-        servings,
       };
 
-      const result = await mealPlanService.createMealPlan(request);
+      const result = await mealPlanItemService.createMealPlanItem(request);
       if (result.data) {
-        // Add to local state
-        const newMeal: MealPlan = {
-          id: (Math.max(...meals.map(m => m.id), 0) + 1),
-          userId: 1,
-          mealId: selectedMeal.id,
-          date: selectedDate,
-          mealType: selectedMealType,
-          servings,
-          completed: false,
-          meal: selectedMeal,
-        };
-        setMeals([...meals, newMeal]);
-        
-        // Reset form
         setSelectedMeal(null);
-        setServings(1);
         setShowAddMealModal(false);
-        setSearchQuery('');
+        setSearchQuery("");
+        await loadMealPlanItems();
       }
     } catch (err) {
-      console.error('Error adding meal:', err);
+      console.error("Error adding meal:", err);
     }
   };
 
-  const handleDeleteMeal = async (mealId: number) => {
+  const handleDeleteMeal = async (mealPlanItemId: number) => {
     try {
-      await mealPlanService.deleteMealPlan(mealId);
-      setMeals(meals.filter(m => m.id !== mealId));
+      await mealPlanItemService.deleteMealPlanItem(mealPlanItemId);
+      alert("Delete successfully");
+      await loadMealPlanItems();
     } catch (err) {
-      console.error('Error deleting meal:', err);
+      alert("Delete Failed");
+      console.error("Error deleting meal:", err);
     }
   };
 
-  const getFilteredMeals = () => {
-    if (!searchQuery) return availableMeals;
-    return availableMeals.filter(m =>
-      m.meal_name.toLowerCase().includes(searchQuery.toLowerCase())
+  const getPlanMealsForDate = (date: string, mealType: MealType) => {
+    return mealPlanItems.filter(
+      (m) => m.mealDate === date && m.mealType === mealType
     );
   };
 
-  const getPlanMealsForDate = (date: string, mealType: string) => {
-    return meals.filter(m => m.date === date && m.mealType === mealType);
-  };
-
   const getTotalCalories = () => {
-    return meals.reduce((sum, m) => sum + ((m.meal?.calories || 0) * m.servings), 0);
+    return mealPlanItems.reduce((sum, m) => sum + (m.meal?.calories || 0), 0);
   };
 
   if (loading) {
@@ -212,7 +223,7 @@ export default function PlanDetail() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground mb-4">Plan not found</p>
-            <Button onClick={() => navigate('/plans')}>Back to Plans</Button>
+            <Button onClick={() => navigate("/plans")}>Back to Plans</Button>
           </div>
         </div>
       </div>
@@ -227,7 +238,7 @@ export default function PlanDetail() {
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Button
-            onClick={() => navigate('/plans')}
+            onClick={() => navigate("/plans")}
             variant="outline"
             className="mb-6"
           >
@@ -241,12 +252,12 @@ export default function PlanDetail() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  {plan.description && (
-                    <p className="text-muted-foreground mt-2">{plan.description}</p>
+                  {plan.note && (
+                    <p className="text-muted-foreground mt-2">{plan.note}</p>
                   )}
-                  {plan.goal && (
+                  {plan.targetCalories && (
                     <div className="text-sm text-primary font-medium mt-2">
-                      🎯 Goal: {plan.goal}
+                      🎯 Goal: {plan.targetCalories}
                     </div>
                   )}
                 </div>
@@ -257,7 +268,9 @@ export default function PlanDetail() {
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm text-muted-foreground">Start Date</div>
+                    <div className="text-sm text-muted-foreground">
+                      Start Date
+                    </div>
                     <div className="font-semibold">
                       {new Date(plan.startDate).toLocaleDateString()}
                     </div>
@@ -266,7 +279,9 @@ export default function PlanDetail() {
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm text-muted-foreground">End Date</div>
+                    <div className="text-sm text-muted-foreground">
+                      End Date
+                    </div>
                     <div className="font-semibold">
                       {new Date(plan.endDate).toLocaleDateString()}
                     </div>
@@ -275,8 +290,12 @@ export default function PlanDetail() {
                 <div className="flex items-center gap-3">
                   <Flame className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm text-muted-foreground">Total Calories</div>
-                    <div className="font-semibold">{Math.round(getTotalCalories())} cal</div>
+                    <div className="text-sm text-muted-foreground">
+                      Total Calories
+                    </div>
+                    <div className="font-semibold">
+                      {Math.round(getTotalCalories())} cal
+                    </div>
                   </div>
                 </div>
               </div>
@@ -289,65 +308,83 @@ export default function PlanDetail() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
                   {/* Previous Week Button */}
-                  <button
-                    onClick={() => {
-                      const newDate = new Date(weekDates[0]);
-                      newDate.setDate(newDate.getDate() - 7);
-                      setSelectedDate(newDate.toISOString().split('T')[0]);
-                      setWeekDates(getWeekDates(newDate));
-                    }}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    title="Previous week"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
+                  {dateIndex > 0 && (
+                    <button
+                      onClick={() => {
+                        setDateIndex(dateIndex - 1);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      title="Previous week"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
 
                   {/* Week View - 7 Days */}
                   <div className="flex-1 grid grid-cols-7 gap-2">
-                    {weekDates.map((date, idx) => {
-                      const dateStr = date.toISOString().split('T')[0];
-                      const isSelected = dateStr === selectedDate;
-                      const isToday = dateStr === new Date().toISOString().split('T')[0];
+                    {weekDates
+                      .slice(dateIndex, dateIndex + 7)
+                      .map((date, idx) => {
+                        const dateStr = date.toISOString().split("T")[0];
+                        const isSelected = dateStr === selectedDate;
+                        const isToday =
+                          dateStr === new Date().toISOString().split("T")[0];
 
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedDate(dateStr)}
-                          className={`p-3 rounded-lg font-medium transition-all flex flex-col items-center gap-1 ${
-                            isSelected
-                              ? 'bg-emerald-500 text-white shadow-lg'
-                              : isToday
-                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-400'
-                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          <span className="text-xs">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]}
-                          </span>
-                          <span className="text-lg font-bold">{date.getDate()}</span>
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedDate(dateStr)}
+                            className={`p-3 rounded-lg font-medium transition-all flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? "bg-emerald-500 text-white shadow-lg"
+                                : isToday
+                                ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-400"
+                                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <span className="text-xs">
+                              {
+                                [
+                                  "Sun",
+                                  "Mon",
+                                  "Tue",
+                                  "Wed",
+                                  "Thu",
+                                  "Fri",
+                                  "Sat",
+                                ][date.getDay()]
+                              }
+                            </span>
+                            <span className="text-lg font-bold">
+                              {date.getDate()}/{date.getMonth() + 1}
+                            </span>
+                          </button>
+                        );
+                      })}
                   </div>
 
                   {/* Next Week Button */}
-                  <button
-                    onClick={() => {
-                      const newDate = new Date(weekDates[6]);
-                      newDate.setDate(newDate.getDate() + 1);
-                      setSelectedDate(newDate.toISOString().split('T')[0]);
-                      setWeekDates(getWeekDates(newDate));
-                    }}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    title="Next week"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                  {dateIndex + 7 < weekDates.length && (
+                    <button
+                      onClick={() => {
+                        setDateIndex(dateIndex + 1);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      title="Next week"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Display selected date info */}
                 <div className="text-center text-sm text-muted-foreground mt-2">
-                  {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(selectedDate).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -355,9 +392,15 @@ export default function PlanDetail() {
 
           {/* Meal Type Grid */}
           <div className="space-y-6">
-            {mealTypes.map(type => {
-              const typeMeals = getPlanMealsForDate(selectedDate, type);
-              const typeCalories = typeMeals.reduce((sum, m) => sum + ((m.meal?.calories || 0) * m.servings), 0);
+            {Object.keys(MEAL_TYPES).map((type) => {
+              const typeMeals = getPlanMealsForDate(
+                selectedDate,
+                type as MealType
+              );
+              const typeCalories = typeMeals.reduce(
+                (sum, m) => sum + (m.meal?.calories || 0),
+                0
+              );
 
               return (
                 <div key={type}>
@@ -365,7 +408,7 @@ export default function PlanDetail() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                        {type}
+                        {MEAL_TYPES[type]}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {Math.round(typeCalories)} cal
@@ -373,10 +416,10 @@ export default function PlanDetail() {
                     </div>
                     <Button
                       onClick={() => {
-                        setSelectedMealType(type);
+                        setSelectedMealType(type as MealType);
                         setSelectedMeal(null);
-                        setServings(1);
-                        setSearchQuery('');
+                        // setServings(1);
+                        setSearchQuery("");
                         setShowAddMealModal(true);
                       }}
                       className="flex items-center gap-2"
@@ -389,7 +432,7 @@ export default function PlanDetail() {
                   {/* Meals Grid */}
                   {typeMeals.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-                      {typeMeals.map(meal => (
+                      {typeMeals.map((meal) => (
                         <div key={meal.id} className="relative group">
                           <MealCard
                             meal={meal.meal!}
@@ -409,21 +452,23 @@ export default function PlanDetail() {
                   ) : (
                     <Card className="mb-6 border-dashed">
                       <CardContent className="pt-6 py-12 flex flex-col items-center justify-center">
-                        <Plus className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-                        <p className="text-muted-foreground mb-4">No meals added for {type}</p>
-                        <Button
+                        {/* <Plus className="w-12 h-12 text-muted-foreground mb-4 opacity-50" /> */}
+                        <p className="text-muted-foreground mb-4">
+                          No meals added for {MEAL_TYPES[type]}
+                        </p>
+                        {/* <Button
                           onClick={() => {
-                            setSelectedMealType(type);
+                            setSelectedMealType(type as MealType);
                             setSelectedMeal(null);
-                            setServings(1);
-                            setSearchQuery('');
+                            // setServings(1);
+                            setSearchQuery("");
                             setShowAddMealModal(true);
                           }}
                           className="flex items-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
-                          Add {type}
-                        </Button>
+                          Add {MEAL_TYPES[type]}
+                        </Button> */}
                       </CardContent>
                     </Card>
                   )}
@@ -438,7 +483,7 @@ export default function PlanDetail() {
       <Dialog open={showAddMealModal} onOpenChange={setShowAddMealModal}>
         <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Meal - {selectedMealType && selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}</DialogTitle>
+            <DialogTitle>Add Meal - {selectedMealType}</DialogTitle>
             <DialogDescription>
               Select a meal to add to your plan
             </DialogDescription>
@@ -448,9 +493,7 @@ export default function PlanDetail() {
             {/* Date & Meal Type Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Date
-                </label>
+                <label className="block text-sm font-medium mb-2">Date</label>
                 <Input
                   type="date"
                   value={selectedDate}
@@ -462,14 +505,23 @@ export default function PlanDetail() {
                 <label className="block text-sm font-medium mb-2">
                   Meal Type
                 </label>
-                <Select value={selectedMealType} onValueChange={setSelectedMealType}>
+                <Select
+                  value={selectedMealType}
+                  onValueChange={(value) =>
+                    setSelectedMealType(value as MealType)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {mealTypes.map(type => (
-                      <SelectItem key={type} value={type} className="capitalize">
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                    {Object.keys(MEAL_TYPES).map((type) => (
+                      <SelectItem
+                        key={type}
+                        value={type}
+                        className="capitalize"
+                      >
+                        {MEAL_TYPES[type]}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -492,21 +544,24 @@ export default function PlanDetail() {
 
             {/* Meals Grid Display */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-              {getFilteredMeals().map(meal => (
+              {availableMeals.map((meal) => (
                 <button
                   key={meal.id}
                   onClick={() => setSelectedMeal(meal)}
                   className={`text-left rounded-lg overflow-hidden transition-all ${
                     selectedMeal?.id === meal.id
-                      ? 'ring-2 ring-emerald-500 shadow-lg'
-                      : 'hover:shadow-md'
+                      ? "ring-2 ring-emerald-500 shadow-lg"
+                      : "hover:shadow-md"
                   }`}
                 >
                   <div className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden">
                     {/* Image */}
                     <div className="h-32 bg-gray-200 dark:bg-gray-600 overflow-hidden">
                       <img
-                        src={meal.image_url || "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400"}
+                        src={
+                          meal.image_url ||
+                          "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400"
+                        }
                         alt={meal.meal_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
@@ -517,7 +572,9 @@ export default function PlanDetail() {
                         {meal.meal_name}
                       </h3>
                       <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{meal.calories} cal</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                          {meal.calories} cal
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -525,7 +582,7 @@ export default function PlanDetail() {
               ))}
             </div>
 
-            {/* Servings */}
+            {/* Servings
             {selectedMeal && (
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -541,8 +598,9 @@ export default function PlanDetail() {
                   className="w-full"
                 />
               </div>
-            )}
-
+            )} */}
+          </div>
+          <DialogFooter>
             {/* Add Button */}
             <Button
               onClick={handleAddMeal}
@@ -551,7 +609,7 @@ export default function PlanDetail() {
             >
               Add to Plan
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

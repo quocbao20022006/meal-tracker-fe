@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, Eye } from "lucide-react";
 import { MealResponse } from "../types";
@@ -32,8 +32,8 @@ export default function MealCard({ meal, onViewMeal }: MealCardProps) {
         )}
 
         <img
-          src={meal.imageUrl || ""}
-          alt={meal.name}
+          src={meal?.image_url || ""}
+          alt={meal?.meal_name}
           loading="lazy"
           onLoad={() => setImgLoaded(true)}
           className={`absolute inset-0 w-full h-full object-cover transition-all ${
@@ -46,16 +46,18 @@ export default function MealCard({ meal, onViewMeal }: MealCardProps) {
           <div className="flex items-center gap-1">
             {/* <span className="text-lg">🔥</span> */}
             <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-              {meal.calories}
+              {meal?.calories}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">kcal</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              kcal
+            </span>
           </div>
         </div>
       </div>
 
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          {meal.categoryName.map((cat) => (
+          {meal?.category_name?.map((cat) => (
             <span
               key={cat}
               className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 capitalize"
@@ -66,28 +68,29 @@ export default function MealCard({ meal, onViewMeal }: MealCardProps) {
         </div>
 
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 line-clamp-1">
-          {meal.name}
+          {meal?.meal_name}
         </h3>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 h-10 line-clamp-2">
-          {meal.description || "Delicious and nutritious meal"}
+          {meal?.meal_description || "Delicious and nutritious meal"}
         </p>
 
         <div className="flex gap-2 items-center text-sm font-bold text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
           <Clock className="w-4 h-4" />
-          {meal.cookingTime}
+          {meal?.cooking_time}
         </div>
 
         <div className="flex gap-2 items-center text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-          <span>Nutrition: {meal.nutrition.join(", ")}</span>
+          <span>Nutrition: {meal?.nutrition.join(", ")}</span>
         </div>
 
-        <button 
+        <button
           onClick={(e) => {
-          e.stopPropagation(); // tránh bị click vào card cha
-          navigate(`/meal/${meal.id}`);
+            e.stopPropagation(); // tránh bị click vào card cha
+            navigate(`/meal/${meal?.id}`);
           }}
-          className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
+          className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2"
+        >
           <Eye className="w-4 h-4" />
           See recipe
         </button>

@@ -51,7 +51,7 @@ export interface UserProfile {
   weightGoal?: number;
   birthDate: string; // Changed from age to birthDate
   age?: number; // Computed field
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   bmi: number;
   bmiCategory: string;
   dailyCalorieGoal: number;
@@ -67,7 +67,7 @@ export interface CreateUserProfileRequest {
   weight: number;
   weightGoal?: number;
   birthDate: string; // Changed from age to birthDate
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   activityLevel?: string;
   goal?: string;
 }
@@ -77,7 +77,7 @@ export interface UpdateUserProfileRequest {
   weight?: number;
   weightGoal?: number;
   birthDate?: string; // Changed from age to birthDate
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   activityLevel?: string;
   goal?: string;
 }
@@ -93,19 +93,19 @@ export interface BMIValidation {
 
 // Activity Level Options
 export const ACTIVITY_LEVELS = {
-  sedentary: 'Sedentary (little or no exercise)',
-  light: 'Light (exercise 1-3 days/week)',
-  moderate: 'Moderate (exercise 3-5 days/week)',
-  active: 'Active (exercise 6-7 days/week)',
-  very_active: 'Very Active (intense exercise daily)',
+  sedentary: "Sedentary (little or no exercise)",
+  light: "Light (exercise 1-3 days/week)",
+  moderate: "Moderate (exercise 3-5 days/week)",
+  active: "Active (exercise 6-7 days/week)",
+  very_active: "Very Active (intense exercise daily)",
 } as const;
 
 export type ActivityLevel = keyof typeof ACTIVITY_LEVELS;
 
 export const GOAL_OPTIONS = {
-  lose_weight: 'Lose Weight',
-  maintain: 'Maintain Weight',
-  gain_weight: 'Gain Weight',
+  lose_weight: "Lose Weight",
+  maintain: "Maintain Weight",
+  gain_weight: "Gain Weight",
 } as const;
 
 export type GoalType = keyof typeof GOAL_OPTIONS;
@@ -153,12 +153,25 @@ export interface MealPlan {
 }
 
 export interface CreateMealPlanRequest {
-  mealId: number;
-  date: string;
-  mealType: string;
-  servings: number;
+  name: string;
+  userId: number;
+  targetCalories?: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  planType: PlanType;
+  isActive: boolean;
 }
 
+export interface UpdateMealPlanRequest {
+  name: string;
+  targetCalories?: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  isActive: boolean;
+  planType: PlanType;
+}
 export interface UpsertMealRequest {
   mealName: string;
   mealDescription?: string | null;
@@ -178,28 +191,74 @@ export interface UpsertMealRequest {
   categories?: number[];
 }
 
-export interface MealPlanTemplate {
+// Meal Plan
+export enum PlanType {
+  WEEKLY,
+  MONTHLY,
+}
+
+// Meal Type
+export enum MealType {
+  BREAKFAST = "BREAKFAST",
+  LUNCH = "LUNCH",
+  SNACK = "SNACK",
+  DINNER = "DINNER",
+}
+
+export const MEAL_TYPES: { [key: string]: string } = {
+  [MealType.BREAKFAST]: "Breakfast",
+  [MealType.DINNER]: "Dinner",
+  [MealType.LUNCH]: "Lunch",
+  [MealType.SNACK]: "Snack",
+};
+
+export interface MealPlanRequest {
+  userId?: number;
+}
+
+export interface MealPlanResponse {
   id: number;
   userId: number;
   name: string;
-  description?: string;
-  goal?: string;
+  note?: string;
+  targetCalories?: number;
   startDate: string;
   endDate: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  planType: PlanType;
 }
 
-export interface CreateMealPlanTemplateRequest {
-  name: string;
-  description?: string;
-  goal?: string;
-  startDate: string;
-  endDate: string;
-  isActive?: boolean;
+export interface PaginatedMealPlans {
+  content: MealPlanResponse[];
 }
 
+export interface MealPlanItemRequest {
+  date?: string;
+  mealPlanId?: number;
+}
+
+export interface PaginatedMealPlanItems {
+  content: MealPlanItemResponse[];
+}
+
+export interface MealPlanItemResponse {
+  id: number;
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
+  meal: MealResponse;
+  mealPlan: MealPlanResponse;
+}
+
+export interface CreateMealPlanItemRequest {
+  mealPlanId: number;
+  mealId: number;
+  mealType: MealType;
+  mealDate: string;
+}
 export interface UpdateMealPlanTemplateRequest {
   name?: string;
   description?: string;
@@ -209,7 +268,6 @@ export interface UpdateMealPlanTemplateRequest {
   isActive?: boolean;
   completed?: boolean;
 }
-
 export interface ApiError {
   message: string;
   status: number;
