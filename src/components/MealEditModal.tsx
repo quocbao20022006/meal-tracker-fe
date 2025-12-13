@@ -3,6 +3,11 @@ import { IngredientResponse, MealResponse, UpsertMealRequest } from "../types";
 import { X, Plus, Trash } from "lucide-react";
 import { updateMeal } from "../services/meal.service";
 import AutocompleteIngredientInput from "./AutocompleteIngredientInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { set } from "react-hook-form";
 
 interface EditMealModalProps {
   meal: MealResponse;
@@ -19,6 +24,10 @@ export default function EditMealModal({
   onClose,
   onUpdate,
 }: EditMealModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+
   const [mealForm, setMealForm] = useState<MealResponse>(meal);
   const [form, setForm] = useState<UpsertMealRequest>({
     mealName: meal.name,
@@ -40,8 +49,6 @@ export default function EditMealModal({
     servings: meal.servings || 1,
   });
 
-  const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   // Map để lưu ingredient names theo index để hiển thị
   const [ingredientNames, setIngredientNames] = useState<Map<number, string>>(
     new Map()
@@ -295,9 +302,9 @@ export default function EditMealModal({
       <div className="bg-white dark:bg-gray-800 w-full max-w-5xl p-6 rounded-3xl shadow-xl overflow-y-auto max-h-[90vh]">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Edit Meal
-          </h2>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Edit meal
+          </h1>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
@@ -308,49 +315,43 @@ export default function EditMealModal({
 
         {/* Meal Basic Info */}
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-            Meal Information
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex justify-start gap-10 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
             {/* Left: Name, Servings, Cooking Time */}
-            <div className="flex flex-col gap-2 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
-              {/* Meal name */}
-              <label className="font-medium text-gray-700 dark:text-gray-200">
-                Meal Name
-              </label>
-              <input
-                type="text"
-                className="w-full p-2 mb-4 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-emerald-400 focus:border-emerald-400 outline-none"
-                value={form.mealName}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, mealName: e.target.value }))
-                }
-              />
+            <div className="flex flex-col gap-5 w-full">
+              <div className="space-y-2">
+                {/* Meal name */}
+                <Label htmlFor="name">Meal Name *</Label>
+                <Input
+                  type="text"
+                  // className="w-full p-2 mb-4 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-emerald-400 focus:border-emerald-400 outline-none"
+                  value={form.mealName}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, mealName: e.target.value }))
+                  }
+                />
+              </div>
 
-              {/* Meal description */}
-              <label className="font-medium text-gray-700 dark:text-gray-200">
-                Description
-              </label>
-              <textarea
-                className="w-full p-2 mb-4 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-emerald-400 focus:border-emerald-400 outline-none"
-                value={form.mealDescription || ""}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    mealDescription: e.target.value,
-                  }))
-                }
-              />
+              <div className="space-y-2">
+                {/* Meal description */}
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  value={form.mealDescription || ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      mealDescription: e.target.value,
+                    }))
+                  }
+                />
+              </div>
 
               {/* Servings + Cooking times */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center space-y-2">
                 {/* Servings */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-medium text-gray-700 dark:text-gray-200">
-                    Servings
-                  </label>
-                  <input
+                  <Label htmlFor="servings">Servings *</Label>
+                  <Input
+                    id="servings"
                     type="number"
                     className="p-2 w-20 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-emerald-400 focus:border-emerald-400 outline-none"
                     value={form.servings}
@@ -365,11 +366,9 @@ export default function EditMealModal({
 
                 {/* Cooking time */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-medium text-gray-700 dark:text-gray-200">
-                    Cooking Time
-                  </label>
+                  <Label htmlFor="cookingTime">Cooking Time *</Label>
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       type="number"
                       value={getHoursFromCookingTime(form.cookingTime)}
                       onChange={(e) =>
@@ -383,7 +382,7 @@ export default function EditMealModal({
                     <span className="text-gray-700 dark:text-gray-200">
                       hours
                     </span>
-                    <input
+                    <Input
                       type="number"
                       value={getMinutesFromCookingTime(form.cookingTime)}
                       onChange={(e) =>
@@ -403,10 +402,9 @@ export default function EditMealModal({
             </div>
 
             {/* Right: Meal Image */}
-            <div className="flex flex-col gap-2 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
-              <label className="font-medium text-gray-700 dark:text-gray-200">
-                Meal Image
-              </label>
+            <div className="flex flex-col gap-2 w-full space-y-2">
+              <Label htmlFor="image">Meal Image</Label>
+
               {(imagePreview || mealForm.imageUrl) && (
                 <img
                   src={imagePreview || mealForm.imageUrl || ""}
@@ -414,16 +412,16 @@ export default function EditMealModal({
                   className="w-full h-64 object-cover rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
                 />
               )}
-              <input
+              <Input
                 type="file"
                 accept="image/*"
                 id="meal-image-input"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    setFileName(file.name);
                     // update form
                     setForm((prev) => ({ ...prev, image: file }));
-
                     // reset preview cũ, tạo preview mới
                     setImagePreview((prev) => {
                       if (prev) URL.revokeObjectURL(prev);
@@ -431,8 +429,20 @@ export default function EditMealModal({
                     });
                   }
                 }}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900 dark:file:text-emerald-300"
+                className="hidden"
               />
+              <div className="flex items-center">
+                <label
+                  htmlFor="meal-image-input"
+                  className="shadow cursor-pointer px-4 py-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600"
+                >
+                  Choose Image
+                </label>
+                {/* Display selected file name */}
+                <div className="flex-1 px-3 text-gray-700 dark:text-gray-300 truncate">
+                  {fileName || "No file selected"}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -455,7 +465,7 @@ export default function EditMealModal({
                     onSelect={(ing) => handleIngredientChange(index, ing)}
                     placeholder="Type ingredient..."
                   />
-                  <input
+                  <Input
                     type="number"
                     className="w-24 p-2 rounded-lg border border-gray-300 dark:border-gray-600 outline-none"
                     value={item.quantity || 0}
@@ -470,10 +480,10 @@ export default function EditMealModal({
                       });
                     }}
                   />
-                  <span className="w-1/5 p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-center bg-gray-100 dark:bg-gray-800">
+                  <span className="w-1/5 p-1 rounded-lg border border-gray-300 dark:border-gray-600 text-center bg-gray-100 dark:bg-gray-800">
                     {form.mealIngredients[index]?.unit || "unit"}
                   </span>
-                  <button
+                  <Button
                     onClick={() => {
                       removeIngredient(index);
                       setIngredientLocalIds((prev) =>
@@ -492,10 +502,10 @@ export default function EditMealModal({
                         return reordered;
                       });
                     }}
-                    className="text-red-500 hover:text-red-700 transition"
+                    className="bg-red-100 hover:bg-red-300 text-red-500 hover:text-red-700 transition"
                   >
                     <Trash className="w-5 h-5" />
-                  </button>
+                  </Button>
                 </div>
               );
             })}
@@ -519,7 +529,7 @@ export default function EditMealModal({
                 key={index}
                 className="flex flex-wrap md:flex-nowrap gap-2 items-center"
               >
-                <input
+                <Input
                   type="number"
                   className="w-16 p-2 rounded-lg border border-gray-300 dark:border-gray-600 outline-none"
                   value={step.step}
@@ -527,7 +537,7 @@ export default function EditMealModal({
                     handleInstructionChange(index, "step", e.target.value)
                   }
                 />
-                <input
+                <Input
                   type="text"
                   placeholder="Type instruction"
                   className="flex-1 p-2 rounded-lg border border-gray-300 dark:border-gray-600 outline-none"
@@ -540,12 +550,12 @@ export default function EditMealModal({
                     )
                   }
                 />
-                <button
+                <Button
                   onClick={() => removeInstruction(index)}
-                  className="text-red-500 hover:text-red-700 transition"
+                  className="bg-red-100 hover:bg-red-300 text-red-500 hover:text-red-700 transition"
                 >
                   <Trash />
-                </button>
+                </Button>
               </div>
             ))}
             <button
@@ -559,18 +569,18 @@ export default function EditMealModal({
 
         {/* Save & Cancel */}
         <div className="flex justify-end gap-3 mt-5">
-          <button
-            className="px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-400 transition"
+          <Button
+            className="w-full px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-400 transition"
             onClick={onClose}
           >
             Cancel
-          </button>
-          <button
-            className="px-6 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition"
+          </Button>
+          <Button
+            className="w-full px-6 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition"
             onClick={handleSave}
           >
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>

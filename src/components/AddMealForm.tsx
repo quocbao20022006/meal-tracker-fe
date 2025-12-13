@@ -257,9 +257,19 @@ export default function AddMealForm() {
     }
 
     try {
+      const formData = new FormData();
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user || !user.id) {
+        console.log("User not found. Please log in again.");
+        toast.error("Add new meal failed.");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
 
-      const formData = new FormData();
+      formData.append("userId", user.id);
       formData.append("mealName", data.mealName);
       formData.append("mealDescription", data.mealDescription);
       formData.append("cookingTime", data.cookingTime);
@@ -295,8 +305,6 @@ export default function AddMealForm() {
         formData.append(`nutrition[${i}]`, n);
       });
 
-      formData.append("nutrition", JSON.stringify(data.nutrition));
-
       console.log("Submitting form data:", data);
 
       const result = await createMeal(formData);
@@ -321,7 +329,7 @@ export default function AddMealForm() {
       }
     } catch (error) {
       console.error("Error adding meal:", error);
-      alert("An error occurred. Please try again.");
+
     } finally {
       setLoading(false);
     }

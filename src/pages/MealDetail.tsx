@@ -16,7 +16,6 @@ import { getMealById, getSimilarMeals } from "../services/meal.service";
 import SimilarRecipes from "../components/SimilarRecipes";
 import MealEditModal from "../components/MealEditModal";
 import InfoTag from "@/components/InfoTag";
-import IngredientCard from "@/components/IngredientCard";
 
 export default function MealDetail() {
   const { id } = useParams();

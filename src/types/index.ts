@@ -189,6 +189,7 @@ export interface UpsertMealRequest {
   servings: number;
   nutrition?: string[];
   categories?: number[];
+  userId: number;
 }
 
 // Meal Plan
