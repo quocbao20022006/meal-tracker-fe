@@ -37,7 +37,7 @@ export default function EditMealModal({
         }))
       : [],
     cookingTime: meal.cookingTime || "",
-    servings: meal.servings || 1,
+    servings: meal.servings || 1
   });
 
   const [loading, setLoading] = useState(false);
