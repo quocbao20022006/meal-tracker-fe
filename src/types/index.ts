@@ -62,6 +62,27 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+export interface UserResponse {
+  user_id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  gender: string;
+  birth_date: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  weight_goal?: number;
+  weight_difference?: number;
+  goal_achieved?: boolean;
+  bmi?: number;
+  bmi_classification?: string;
+  daily_calories?: number;
+  activity_level?: string;
+  goal?: string;
+  created_at: string;
+}
+
 export interface CreateUserProfileRequest {
   height: number;
   weight: number;
