@@ -122,7 +122,7 @@ export default function Plans() {
         name: formData.name,
         endDate: formatDate(formData.endDate),
         startDate: formatDate(formData.startDate),
-        isActive: formData.isActive || false,
+        isActive: false,
         targetCalories: formData.targetCalories,
         note: formData.note,
         planType: formData.planType,
@@ -261,20 +261,20 @@ export default function Plans() {
         </span>
       );
     }
-    if (daysLeft < 0) {
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200">
-          Expired
-        </span>
-      );
-    }
-    if (daysLeft < 7) {
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-200 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">
-          Ending Soon
-        </span>
-      );
-    }
+    // if (daysLeft < 0) {
+    //   return (
+    //     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200">
+    //       Expired
+    //     </span>
+    //   );
+    // }
+    // if (daysLeft < 7) {
+    //   return (
+    //     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-200 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">
+    //       Ending Soon
+    //     </span>
+    //   );
+    // }
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-200">
         Active
@@ -405,7 +405,7 @@ export default function Plans() {
                   </div>
 
                   {/* Active Toggle */}
-                  <div className="flex items-center space-x-2 p-3 bg-secondary rounded-lg">
+                  {/* <div className="flex items-center space-x-2 p-3 bg-secondary rounded-lg">
                     <Checkbox
                       id="isActive"
                       checked={formData.isActive ?? true}
@@ -422,7 +422,7 @@ export default function Plans() {
                     >
                       Activate this plan immediately
                     </label>
-                  </div>
+                  </div> */}
 
                   {/* Buttons */}
                   <div className="flex gap-3 pt-4">
