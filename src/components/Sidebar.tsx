@@ -1,11 +1,9 @@
-import { Home, Utensils, History, BookOpen, Calendar, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { Home, Utensils, History, BookOpen, Calendar, User, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 
 export default function Sidebar() {
   const { logout } = useAuthContext();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,7 +23,6 @@ export default function Sidebar() {
     { id: 'plans', label: 'Plans', icon: Calendar, path: '/plans' },
     { id: 'history', label: 'History', icon: History, path: '/history' },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   return (
@@ -63,19 +60,6 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-3 space-y-2">
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
-        >
-          {theme === 'light' ? (
-            <Moon className="w-5 h-5 flex-shrink-0" />
-          ) : (
-            <Sun className="w-5 h-5 flex-shrink-0" />
-          )}
-          <span className="hidden lg:block font-medium">
-            {theme === 'light' ? 'Dark' : 'Light'} Mode
-          </span>
-        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
