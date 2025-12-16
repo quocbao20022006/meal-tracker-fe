@@ -234,6 +234,18 @@ export const MEAL_TYPES: { [key: string]: string } = {
   [MealType.SNACK]: "Snack",
 };
 
+// Meal Category
+export enum MealCategory {
+  APPETIZERS = "Appetizers",
+  MAIN_COURSES = "MainCourses",
+  SNACKS = "Snacks",
+  DESSERTS = "Desserts",
+  SALADS = "Salads",
+  SOUPS = "Soups",
+  BEVERAGE = "Beverage",
+  ALL = "All"
+}
+
 export interface MealPlanRequest {
   userId?: number;
 }

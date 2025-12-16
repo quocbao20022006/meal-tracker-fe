@@ -308,7 +308,7 @@ export default function Plans() {
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all">
                   <Plus className="w-4 h-4" />
                   New Plan
                 </Button>
@@ -480,7 +480,7 @@ export default function Plans() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <CardTitle
-                          className="truncate"
+                          className="text-xl"
                           onClick={() => navigate(`/plans/${plan.id}`)}
                         >
                           {plan.name}
@@ -540,7 +540,7 @@ export default function Plans() {
                         onClick={() => handleToggleUpdate(plan)}
                         variant={"default"}
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all"
                       >
                         <EditIcon className="w-4 h-4 mr-2" />
                         {"Update"}
