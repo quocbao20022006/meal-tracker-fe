@@ -20,7 +20,12 @@ import { Button } from "@/components/ui/button";
 import MealCard from "./MealCard";
 import * as mealService from "../services/meal.service";
 import * as mealPlanItemService from "../services/meal-plan-item.service";
-import { MealResponse, MealType, CreateMealPlanItemRequest, MealPlanItemResponse } from "../types";
+import {
+  MealResponse,
+  MealType,
+  CreateMealPlanItemRequest,
+  MealPlanItemResponse,
+} from "../types";
 
 interface AddMealDialogProps {
   open: boolean;
@@ -33,7 +38,7 @@ interface AddMealDialogProps {
   selectedMealType: MealType;
   setSelectedMealType: (type: MealType) => void;
 
-  onAddSuccess: (meal: MealPlanItemResponse, mealType: MealType, date: string) => void;
+  onAddSuccess: (meal: MealPlanItemResponse) => void;
 }
 
 const mealCategories = [
@@ -106,8 +111,11 @@ export default function AddMealDialog({
       };
 
       const res = await mealPlanItemService.createMealPlanItem(request);
+      console.log("API Response:", res.data); // Kiểm tra response
+      console.log("Meal data:", res.data?.meal); // Kiểm tra meal object
+
       if (res.data) {
-        onAddSuccess(res.data, selectedMealType, selectedDate);
+        onAddSuccess(res.data);
         setSelectedMeal(null);
         setSearchQuery("");
         onOpenChange(false);

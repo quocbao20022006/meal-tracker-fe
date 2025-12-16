@@ -17,6 +17,7 @@ import {
 } from "../types";
 import * as mealPlanService from "../services/meal-plan.service";
 import * as mealPlanItemService from "../services/meal-plan-item.service";
+import * as mealService from "../services/meal.service";
 
 export default function PlanDetail() {
   const navigate = useNavigate();
@@ -64,7 +65,39 @@ export default function PlanDetail() {
   }, [planId]);
 
   // Load meal plan items for selectedDate
+  // const loadMealPlanItems = async (date: string) => {
+  //   if (!planId) return;
+  //   setLoading(true);
+  //   try {
+  //     const res = await mealPlanItemService.getMealPlanItemsByDate({
+  //       mealPlanId: +planId,
+  //       date,
+  //     });
+  //     const items = res.data?.content || [];
+  //     setMealPlanItems(items);
+
+  //     // Group by mealType
+  //     const grouped: Record<string, MealPlanItemResponse[]> = {
+  //       breakfast: [],
+  //       lunch: [],
+  //       dinner: [],
+  //       snack: [],
+  //     };
+  //     items.forEach((item) => {
+  //       if (grouped[item.mealType]) {
+  //         grouped[item.mealType].push(item);
+  //       }
+  //     });
+  //     setMealsByType(grouped);
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  // Load meal plan items for selectedDate
   const loadMealPlanItems = async (date: string) => {
+    console.log(date);
     if (!planId) return;
     setLoading(true);
     try {
@@ -73,21 +106,43 @@ export default function PlanDetail() {
         date,
       });
       const items = res.data?.content || [];
-      setMealPlanItems(items);
+      console.log("dấdasdasds",res.data);
+
+      // Fetch thông tin meal cho từng item
+      const itemsWithMeals = await Promise.all(
+        items.map(async (item) => {
+          try {
+            const mealRes = await mealService.getMealById(item.mealId);
+            return {
+              ...item,
+              meal: mealRes.data,
+            };
+          } catch (err) {
+            console.error(`Failed to fetch meal ${item.mealId}:`, err);
+            return item; // Giữ item gốc nếu fetch lỗi
+          }
+        })
+      );
+
+      setMealPlanItems(itemsWithMeals);
 
       // Group by mealType
       const grouped: Record<string, MealPlanItemResponse[]> = {
-        breakfast: [],
-        lunch: [],
-        dinner: [],
-        snack: [],
+        BREAKFAST: [],
+        LUNCH: [],
+        DINNER: [],
+        SNACK: [],
       };
-      items.forEach((item) => {
+
+      itemsWithMeals.forEach((item) => {
         if (grouped[item.mealType]) {
           grouped[item.mealType].push(item);
         }
       });
+
+      console.log("grop", grouped)
       setMealsByType(grouped);
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -120,11 +175,36 @@ export default function PlanDetail() {
   }, [plan]);
 
   // Add meal
-  const handleAddSuccess = (item: MealPlanItemResponse) => {
-    setMealsByType((prev) => {
-      const current = prev[item.mealType] || [];
-      return { ...prev, [item.mealType]: [...current, item] };
-    });
+  // const handleAddSuccess = (item: MealPlanItemResponse) => {
+
+  //   setMealsByType((prev) => {
+  //     const current = prev[item.mealType] || [];
+  //     return { ...prev, [item.mealType]: [...current, item] };
+  //   });
+  // };
+  const handleAddSuccess = async (item: MealPlanItemResponse) => {
+    try {
+      // Fetch meal details bằng mealId
+      const mealRes = await mealService.getMealById(item.mealId);
+
+      if (mealRes.data) {
+        // Tạo meal plan item có đầy đủ thông tin meal
+        const fullItem: MealPlanItemResponse = {
+          ...item,
+          meal: mealRes.data,
+        };
+
+        // Thêm vào state
+        setMealsByType((prev) => {
+          const current = prev[item.mealType] || [];
+          return { ...prev, [item.mealType]: [...current, fullItem] };
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch meal details:", err);
+      // Nếu fetch lỗi, reload toàn bộ data
+      await loadMealPlanItems(selectedDate);
+    }
   };
 
   const handleDeleteMeal = async (id: number, type: string) => {
