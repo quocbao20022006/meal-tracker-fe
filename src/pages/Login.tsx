@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { LogIn, Mail, Lock } from 'lucide-react';
+import { getProfile } from '../services/user-profile.service';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, loginLoading, loginError } = useAuth();
+  const { login, loginLoading } = useAuth();
   const { refreshAuth } = useAuthContext();
   const navigate = useNavigate();
 
@@ -23,18 +24,37 @@ export default function Login() {
 
     try {
       const result = await login({ email, password });
-      console.log('result', result);
+
       if (result?.error) {
         setError(result.error.message || 'Failed to sign in');
-      } else {
-        // Refresh auth state and navigate
-        refreshAuth();
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 100);
+        return;
+      }
+
+      // Login thành công, kiểm tra xem user đã có profile chưa
+      if (result?.data?.user_id) {
+        const userId = result.data.user_id;
+
+        const profileResult = await getProfile(userId);
+
+        if (profileResult.data && !profileResult.error) {
+          localStorage.setItem('hasProfile', 'true');
+          refreshAuth();
+
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 100);
+        } else {
+          localStorage.setItem('hasProfile', 'false');
+          refreshAuth();
+
+          setTimeout(() => {
+            navigate('/onboarding');
+          }, 100);
+        }
       }
     } catch (err) {
-      setError(loginError?.message || 'Failed to sign in');
+      console.error('Login error:', err);
+      setError('Failed to sign in');
     }
   };
 

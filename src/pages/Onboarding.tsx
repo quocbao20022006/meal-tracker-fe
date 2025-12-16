@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { User, Scale, Calendar, Users, Activity, Target, AlertCircle } from 'lucide-react';
+import { User, Scale, Calendar, Users, Activity, Target, AlertCircle, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { ACTIVITY_LEVELS, GOAL_OPTIONS, ActivityLevel, GoalType } from '../types';
 import { validateWeightGoal, calculateBMI, getBMICategory } from '../utils/bmiHelper';
 import { calculateAge } from '../services/user-profile.service';
@@ -109,9 +109,10 @@ export default function Onboarding() {
       }
     }
 
-    // Step 3 (weight goal) là optional, không cần validate
+    // Step 3 (goal) - không cần validate, chỉ chọn
+    // Step 4 (weight goal) là optional, không cần validate
 
-    if (step === 4) {
+    if (step === 5) {
       if (!formData.birthDate) {
         setError('Please enter your birth date');
         return;
@@ -153,6 +154,36 @@ export default function Onboarding() {
 
   // Calculate age for display if birthDate is entered
   const displayAge = formData.birthDate ? calculateAge(formData.birthDate) : null;
+
+  // Get goal suggestion based on BMI
+  const getGoalSuggestion = () => {
+    if (!currentBMI) return null;
+
+    if (currentBMI < 18.5) {
+      return {
+        suggested: 'gain_weight' as GoalType,
+        icon: <TrendingUp className="w-5 h-5" />,
+        message: 'Based on your BMI, gaining weight might be beneficial for your health.',
+        color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30'
+      };
+    } else if (currentBMI >= 25) {
+      return {
+        suggested: 'lose_weight' as GoalType,
+        icon: <TrendingDown className="w-5 h-5" />,
+        message: 'Based on your BMI, losing weight might be beneficial for your health.',
+        color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30'
+      };
+    } else {
+      return {
+        suggested: 'maintain' as GoalType,
+        icon: <Minus className="w-5 h-5" />,
+        message: 'Your BMI is in the healthy range. Maintaining your current weight is recommended.',
+        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30'
+      };
+    }
+  };
+
+  const goalSuggestion = step === 3 ? getGoalSuggestion() : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -244,8 +275,58 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 3: Weight Goal */}
+            {/* Step 3: Goal */}
             {step === 3 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  What's your goal? *
+                </label>
+
+                {/* BMI-based suggestion */}
+                {goalSuggestion && (
+                  <div className={`mb-4 p-4 rounded-xl flex items-start gap-3 ${goalSuggestion.color}`}>
+                    {goalSuggestion.icon}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        {goalSuggestion.message}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {Object.entries(GOAL_OPTIONS).map(([key, label]) => {
+                    const isRecommended = goalSuggestion?.suggested === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, goal: key as GoalType })}
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${formData.goal === key
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
+                          }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {label}
+                          </span>
+                          {isRecommended && (
+                            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-emerald-200 dark:bg-emerald-700 text-emerald-800 dark:text-emerald-200 font-semibold">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Weight Goal */}
+            {step === 4 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Target Weight (kg) - Optional
@@ -282,8 +363,8 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 4: Birth Date */}
-            {step === 4 && (
+            {/* Step 5: Birth Date */}
+            {step === 5 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Birth Date *
@@ -311,8 +392,8 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 5: Gender & Activity Level */}
-            {step === 5 && (
+            {/* Step 6: Gender & Activity Level */}
+            {step === 6 && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -351,35 +432,6 @@ export default function Onboarding() {
                       <option key={key} value={key}>{label}</option>
                     ))}
                   </select>
-                </div>
-              </div>
-            )}
-
-            {/* Step 6: Goal */}
-            {step === 6 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  What's your goal? *
-                </label>
-                <div className="space-y-3">
-                  {Object.entries(GOAL_OPTIONS).map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, goal: key as GoalType })}
-                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${formData.goal === key
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          {label}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
                 </div>
               </div>
             )}
