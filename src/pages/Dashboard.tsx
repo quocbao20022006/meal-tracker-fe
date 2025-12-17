@@ -2,29 +2,36 @@ import { useEffect, useState } from "react";
 import { Clock, Flame, TrendingUp, Plus } from "lucide-react";
 import Header from "../components/Header";
 import { useMealPlans } from "../hooks/useMealPlans";
-import { useUserProfile } from "../hooks/useUserProfile";
-import { MealPlan } from "../types";
+import { MealPlan, UserProfile } from "../types";
 import BarChart from "../components/CaloriesBarChart";
 // import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { get, set } from "react-hook-form";
+import { getProfile } from "@/services/user-profile.service";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
   const { mealPlans, loading: mealsLoading } = useMealPlans();
-  const { profile, loading: profileLoading } = useUserProfile(user?.id || 0);
+  // const { profile, loading: profileLoading } = useUserProfile(user?.id || 0);
   const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [profile, setProfile] = useState<UserProfile | null>();
 
 
   const consumedCalories = 0; // Đợi gán tổng calories các meal trong ngày
-
   useEffect(() => {
-    loadDashboardData();
-  }, [mealPlans]);
+    const fetchData = async () => {
+      loadDashboardData();
+      const data = await getProfile(user?.id ?? 0);
+      setProfile(data.data);
+    };
+
+    fetchData();
+  }, []);
 
   const loadDashboardData = async () => {
     const today = new Date().toISOString().split("T")[0];
@@ -34,7 +41,7 @@ export default function Dashboard() {
       setTodayMeals(filtered);
     }
 
-    setLoading(mealsLoading || profileLoading);
+    setLoading(mealsLoading);
   };
 
   const getPlanType = (): "Moderate" | "High" | "Low" => {
