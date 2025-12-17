@@ -244,7 +244,7 @@ export enum MealCategory {
   SALADS = "Salads",
   SOUPS = "Soups",
   BEVERAGE = "Beverage",
-  ALL = "All"
+  ALL = "All",
 }
 
 export interface MealPlanRequest {
@@ -263,6 +263,7 @@ export interface MealPlanResponse {
   createdAt: string;
   updatedAt: string;
   planType: PlanType;
+  mealsByDate?: { [key: string]: MealPlanItemResponse[] };
 }
 
 export interface PaginatedMealPlans {
@@ -286,6 +287,8 @@ export interface MealPlanItemResponse {
   mealDate: string;
   meal: MealResponse;
   mealPlan: MealPlanResponse;
+  imageUrl?: string;
+  calories?: number;
 }
 
 export interface CreateMealPlanItemRequest {
@@ -346,3 +349,13 @@ export interface CategoryResponseList {
   number: number;
   size: number;
 }
+
+export const DayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];

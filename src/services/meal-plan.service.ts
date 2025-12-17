@@ -11,7 +11,7 @@ import {
 
 export const getAllMealPlans = async (params: MealPlanRequest) => {
   return httpClient.get<PaginatedMealPlans>(
-    `/meal-plan/all?userId=${params.userId}&sort=createdAt,asc`
+    `/meal-plan/all?userId=${params.userId}&sort=createdAt,desc`
   );
 };
 
