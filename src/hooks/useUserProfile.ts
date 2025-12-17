@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import * as userProfileService from '../services/user-profile.service';
 import { useFetch, useMutation } from './useFetch';
 import { UserProfile, CreateUserProfileRequest, UpdateUserProfileRequest } from '../types';
@@ -10,6 +10,13 @@ export function useUserProfile(userId: number) {
   const { data: profile, loading, error, execute: fetchProfile, setData } = useFetch<UserProfile>(
     () => userProfileService.getProfile(userId)
   );
+
+  // Auto-fetch profile when userId changes
+  useEffect(() => {
+    if (userId && userId > 0) {
+      fetchProfile();
+    }
+  }, [userId, fetchProfile]);
 
   const createProfile = useMutation<UserProfile>(async (request: CreateUserProfileRequest) => {
     const result = await userProfileService.createProfile(request);

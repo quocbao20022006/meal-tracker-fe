@@ -9,13 +9,18 @@ import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuthContext();
   const { mealPlans, loading: mealsLoading } = useMealPlans();
-  const { profile, loading: profileLoading } = useUserProfile(1); // Use dummy userId for now
+  const { profile, loading: profileLoading } = useUserProfile(user?.id || 0);
   const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+
+  const consumedCalories = 0; // Đợi gán tổng calories các meal trong ngày
 
   useEffect(() => {
     loadDashboardData();
@@ -30,6 +35,20 @@ export default function Dashboard() {
     }
 
     setLoading(mealsLoading || profileLoading);
+  };
+
+  const getPlanType = (): "Moderate" | "High" | "Low" => {
+    if (!profile?.goal) return "Moderate";
+
+    switch (profile.goal.toLowerCase()) {
+      case "lose_weight":
+        return "Low";
+      case "gain_weight":
+        return "High";
+      case "maintain":
+      default:
+        return "Moderate";
+    }
   };
 
   const mealsByType = {
@@ -60,15 +79,26 @@ export default function Dashboard() {
           <div className="mt-8 flex justify-between items-stretch gap-10">
             {/* Daily Calories Donut */}
             <div className="w-full bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md flex-1 flex items-center justify-center">
-              <DailyCaloriesDonutChart goal={2000} consumed={1500} size={220} />
+              <DailyCaloriesDonutChart
+                goal={profile?.dailyCalories || 2000}
+                consumed={consumedCalories}
+                size={220}
+              />
             </div>
 
             {/* Goal Card */}
             <div className="w-full flex-1">
               <GoalCard
-                targetWeight={58}
-                planType="Moderate"
-                description="Follow this plan to gradually reach your target weight."
+                targetWeight={profile?.weightGoal || profile?.weight || 0}
+                currentWeight={profile?.weight || 0}
+                currentBMI={profile?.bmi || 0}
+                dailyCalories={Math.round(profile?.dailyCalories || 0)}
+                planType={getPlanType()}
+                description={
+                  profile?.goal
+                    ? `Your personalized ${getPlanType().toLowerCase()} plan to ${profile.goal.replace('_', ' ')}`
+                    : "Your personalized plan to reach the target weight"
+                }
               />
             </div>
           </div>

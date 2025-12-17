@@ -62,25 +62,26 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-export interface UserResponse {
-  user_id: number;
+// Update UserProfile interface to match backend UserResponse
+export interface UserProfile {
+  id: number;
   username: string;
   email: string;
-  full_name: string;
-  gender: string;
-  birth_date: string;
+  fullName: string;
+  gender: "male" | "female" | "other";
+  birthDate: string;
   age?: number;
-  height?: number;
-  weight?: number;
-  weight_goal?: number;
-  weight_difference?: number;
-  goal_achieved?: boolean;
-  bmi?: number;
-  bmi_classification?: string;
-  daily_calories?: number;
-  activity_level?: string;
-  goal?: string;
-  created_at: string;
+  height: number; // cm
+  weight: number; // kg
+  weightGoal?: number; // kg
+  weightDifference?: number; // Current weight - goal weight
+  goalAchieved?: boolean;
+  bmi: number;
+  bmiClassification?: string; // "Underweight", "Normal", "Overweight", "Obese"
+  dailyCalories: number;
+  activityLevel?: string; // "sedentary", "light", "moderate", "active", "very_active"
+  goal?: string; // "lose_weight", "maintain", "gain_weight"
+  createdAt: string;
 }
 
 export interface CreateUserProfileRequest {
