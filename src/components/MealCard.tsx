@@ -90,7 +90,7 @@ export default function MealCard({
           {meal?.cookingTime} min
         </div>
 
-        <div className="flex gap-2 items-center text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+        <div className="flex gap-2 items-center text-sm text-gray-600 dark:text-gray-400 mb-3 h-10 line-clamp-2">
           <span>Nutrition: {meal?.nutrition.join(", ")}</span>
         </div>
 

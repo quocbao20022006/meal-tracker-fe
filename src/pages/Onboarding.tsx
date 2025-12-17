@@ -52,19 +52,18 @@ export default function Onboarding() {
         return;
       }
 
+      // Validate weight goal is required
+      if (!weightGoal || weightGoal <= 0) {
+        setError('Please enter a valid target weight');
+        setLoading(false);
+        return;
+      }
+
       // Validate birth date
       const birthDate = new Date(formData.birthDate);
       const today = new Date();
       if (birthDate >= today) {
         setError('Birth date must be in the past');
-        setLoading(false);
-        return;
-      }
-
-      // Check minimum age (e.g., 10 years old)
-      const age = calculateAge(formData.birthDate);
-      if (age < 10) {
-        setError('You must be at least 10 years old');
         setLoading(false);
         return;
       }
@@ -110,7 +109,13 @@ export default function Onboarding() {
     }
 
     // Step 3 (goal) - không cần validate, chỉ chọn
-    // Step 4 (weight goal) là optional, không cần validate
+
+    if (step === 4) {
+      if (!formData.weightGoal || parseFloat(formData.weightGoal) <= 0) {
+        setError('Please enter your target weight');
+        return;
+      }
+    }
 
     if (step === 5) {
       if (!formData.birthDate) {
@@ -284,7 +289,7 @@ export default function Onboarding() {
 
                 {/* BMI-based suggestion */}
                 {goalSuggestion && (
-                  <div className={`mb-4 p-4 rounded-xl flex items-start gap-3 ${goalSuggestion.color}`}>
+                  <div className={`mb-4 p-4 rounded-lg flex items-start gap-3 ${goalSuggestion.color}`}>
                     {goalSuggestion.icon}
                     <div className="flex-1">
                       <p className="text-sm font-medium">
@@ -328,9 +333,32 @@ export default function Onboarding() {
             {/* Step 4: Weight Goal */}
             {step === 4 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Target Weight (kg) - Optional
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                  Target Weight (kg) *
                 </label>
+
+                {/* Recommended Weight Range */}
+                {formData.height && (
+                  <div className="mb-3 p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-start gap-3">
+                    <div className="flex items-center justify-center w-5 h-5 flex-shrink-0 mt-0.5">
+                      <span className="text-emerald-600 dark:text-emerald-400">💡</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200 mb-1">
+                        Recommended healthy weight range:
+                      </p>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                        {(() => {
+                          const heightInM = parseFloat(formData.height) / 100;
+                          const minWeight = (18.5 * heightInM * heightInM).toFixed(1);
+                          const maxWeight = (24.9 * heightInM * heightInM).toFixed(1);
+                          return `${minWeight} - ${maxWeight} kg (BMI 18.5-24.9)`;
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="relative">
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
@@ -338,9 +366,10 @@ export default function Onboarding() {
                     value={formData.weightGoal}
                     onChange={(e) => handleWeightGoalChange(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                    placeholder="e.g., 65 (optional)"
+                    placeholder="e.g., 65"
                     min="30"
                     max="300"
+                    required
                   />
                 </div>
                 {weightGoalWarning && (
@@ -358,7 +387,7 @@ export default function Onboarding() {
                   </div>
                 )}
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Leave empty if you don't have a specific weight goal
+                  Enter your target weight based on your health goals
                 </p>
               </div>
             )}
