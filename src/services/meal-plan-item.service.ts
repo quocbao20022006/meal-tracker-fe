@@ -3,6 +3,7 @@ import {
   CreateMealPlanItemRequest,
   MealPlanItemRequest,
   MealPlanItemResponse,
+  MealPlanResponse,
   PaginatedMealPlanItems,
 } from "../types";
 
@@ -22,4 +23,10 @@ export const createMealPlanItem = async (
 
 export const deleteMealPlanItem = async (id: number) => {
   return httpClient.httpDelete(`/meal-plan-item/delete/${id}`);
+};
+
+export const getMealPlanItemsOfActiveMealPlan = async (userId: number) => {
+  return httpClient.get<MealPlanResponse>(
+    `/meal-plan-item/active-plan/${userId}`
+  );
 };

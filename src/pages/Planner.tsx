@@ -1,18 +1,27 @@
-import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Flame, TrendingUp } from 'lucide-react';
-import Header from '../components/Header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMealPlans } from '../hooks/useMealPlans';
-import { MealPlan } from '../types';
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Flame, TrendingUp } from "lucide-react";
+import Header from "../components/Header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { DayNames, MealPlanItemResponse, MealType } from "../types";
+import * as mealPlanItemService from "../services/meal-plan-item.service";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export default function Planner() {
-  const { getWeekMealPlans } = useMealPlans();
   const [currentWeek, setCurrentWeek] = useState(getWeekDates(new Date()));
-  const [viewMode, setViewMode] = useState<'week' | 'stats'>('week');
-  const [filteredMeals, setFilteredMeals] = useState<MealPlan[]>([]);
+  const [viewMode, setViewMode] = useState<"week" | "stats">("week");
+  const [filteredMeals, setFilteredMeals] = useState<MealPlanItemResponse[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [weekStats, setWeekStats] = useState<any[]>([]);
+  const { user } = useAuthContext();
 
   useEffect(() => {
     loadWeekMeals();
@@ -39,13 +48,21 @@ export default function Planner() {
   const loadWeekMeals = async () => {
     setLoading(true);
     try {
-      const startDate = currentWeek[0].toISOString().split('T')[0];
-      const result = await getWeekMealPlans(startDate);
+      const result = await mealPlanItemService.getMealPlanItemsOfActiveMealPlan(
+        user?.id!
+      );
       if (result.data) {
-        setFilteredMeals(result.data);
+        let mealsByDate = result.data.mealsByDate;
+        if (mealsByDate) {
+          let mealPlanItems: MealPlanItemResponse[] = [];
+          Object.keys(mealsByDate).forEach((date) => {
+            mealPlanItems = mealPlanItems.concat(mealsByDate[date]);
+          });
+          setFilteredMeals(mealPlanItems);
+        }
       }
     } catch (err) {
-      console.error('Error loading week meals:', err);
+      console.error("Error loading week meals:", err);
     } finally {
       setLoading(false);
     }
@@ -53,13 +70,16 @@ export default function Planner() {
 
   const calculateWeekStats = () => {
     const stats = currentWeek.map((date) => {
-      const dateStr = date.toISOString().split('T')[0];
-      const dayMeals = filteredMeals.filter(mp => mp.date === dateStr);
-      const calories = dayMeals.reduce((sum, mp) => sum + ((mp.meal?.calories || 0) * mp.servings), 0);
-      
+      const dateStr = date.toISOString().split("T")[0];
+      const dayMeals = filteredMeals.filter((mp) => mp.mealDate === dateStr);
+      const calories = dayMeals.reduce(
+        (sum, mp) => sum + (mp.meal?.calories || 0),
+        0
+      );
+
       return {
         date: dateStr,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
         calories,
       };
     });
@@ -79,20 +99,18 @@ export default function Planner() {
   };
 
   const getMealsForDay = (date: Date, mealType: string) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return filteredMeals.filter(
-      mp => mp.date === dateStr && mp.mealType === mealType
+    const dateStr = date.toISOString().split("T")[0];
+    const mealsForDay = filteredMeals.filter(
+      (mp) => mp.mealDate === dateStr && mp.mealType === mealType
     );
+    return mealsForDay;
   };
 
   const getDayCalories = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const dayMeals = filteredMeals.filter(mp => mp.date === dateStr);
-    return dayMeals.reduce((sum, mp) => sum + ((mp.meal?.calories || 0) * mp.servings), 0);
+    const dateStr = date.toISOString().split("T")[0];
+    const dayMeals = filteredMeals.filter((mp) => mp.mealDate === dateStr);
+    return dayMeals.reduce((sum, mp) => sum + (mp?.calories || 0), 0);
   };
-
-  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   if (loading) {
     return (
@@ -111,14 +129,14 @@ export default function Planner() {
           {/* View Mode Tabs */}
           <div className="flex gap-3 mb-6">
             <Button
-              onClick={() => setViewMode('week')}
-              variant={viewMode === 'week' ? 'default' : 'outline'}
+              onClick={() => setViewMode("week")}
+              variant={viewMode === "week" ? "default" : "outline"}
             >
               Weekly View
             </Button>
             <Button
-              onClick={() => setViewMode('stats')}
-              variant={viewMode === 'stats' ? 'default' : 'outline'}
+              onClick={() => setViewMode("stats")}
+              variant={viewMode === "stats" ? "default" : "outline"}
               className="flex items-center gap-2"
             >
               <TrendingUp className="w-4 h-4" />
@@ -127,29 +145,29 @@ export default function Planner() {
           </div>
 
           {/* Week View */}
-          {viewMode === 'week' && (
+          {viewMode === "week" && (
             <>
               <Card className="mb-6">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
-                    <Button
-                      onClick={previousWeek}
-                      variant="outline"
-                      size="sm"
-                    >
+                    <Button onClick={previousWeek} variant="outline" size="sm">
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
 
                     <h2 className="text-lg font-semibold">
-                      {currentWeek[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} -{' '}
-                      {currentWeek[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {currentWeek[0].toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                      })}{" "}
+                      -{" "}
+                      {currentWeek[6].toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </h2>
 
-                    <Button
-                      onClick={nextWeek}
-                      variant="outline"
-                      size="sm"
-                    >
+                    <Button onClick={nextWeek} variant="outline" size="sm">
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </div>
@@ -160,19 +178,18 @@ export default function Planner() {
               <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
                 {currentWeek.map((date, idx) => {
                   const calories = getDayCalories(date);
-                  const isToday = date.toDateString() === new Date().toDateString();
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
 
                   return (
                     <Card
                       key={idx}
-                      className={isToday ? 'ring-2 ring-primary' : ''}
+                      className={isToday ? "ring-2 ring-primary" : ""}
                     >
                       <CardHeader className="pb-3">
                         <div className="text-center">
-                          <CardDescription>
-                            {dayNames[idx]}
-                          </CardDescription>
-                          <CardTitle className={isToday ? 'text-primary' : ''}>
+                          <CardDescription>{DayNames[idx]}</CardDescription>
+                          <CardTitle className={isToday ? "text-primary" : ""}>
                             {date.getDate()}
                           </CardTitle>
                         </div>
@@ -182,28 +199,35 @@ export default function Planner() {
                         <div className="p-3 bg-muted rounded-lg">
                           <div className="flex items-center justify-center gap-2 text-primary">
                             <Flame className="w-4 h-4" />
-                            <span className="font-semibold">{Math.round(calories)} cal</span>
+                            <span className="font-semibold">
+                              {Math.round(calories)} cal
+                            </span>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          {mealTypes.map((type) => {
+                          {Object.keys(MealType).map((type) => {
                             const meals = getMealsForDay(date, type);
                             return (
-                              <div key={type} className="p-2 bg-muted rounded-lg">
+                              <div
+                                key={type}
+                                className="p-2 bg-muted rounded-lg"
+                              >
                                 <div className="text-xs font-medium text-muted-foreground mb-1 capitalize">
                                   {type}
                                 </div>
                                 {meals.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {meals.map((mp) => (
-                                      <div
-                                        key={mp.id}
-                                        className="text-xs text-foreground truncate"
-                                      >
-                                        {mp.meal?.meal_name}
-                                      </div>
-                                    ))}
+                                  <div className="flex flex-wrap gap-2">
+                                    {meals.map(
+                                      (mp) =>
+                                        mp?.imageUrl && (
+                                          <img
+                                            key={mp.id}
+                                            src={mp?.imageUrl}
+                                            className="w-8 h-8 rounded-full object-cover ring-2 ring-white"
+                                          />
+                                        )
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="text-xs text-muted-foreground">
@@ -223,7 +247,7 @@ export default function Planner() {
           )}
 
           {/* Statistics View */}
-          {viewMode === 'stats' && (
+          {viewMode === "stats" && (
             <Card>
               <CardHeader>
                 <CardTitle>Weekly Calorie Intake</CardTitle>
@@ -231,13 +255,16 @@ export default function Planner() {
                   Track your daily calorie consumption
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-7 gap-4">
                   {weekStats.map((stat, idx) => {
-                    const maxCal = Math.max(...weekStats.map(s => s.calories), 2500);
+                    const maxCal = Math.max(
+                      ...weekStats.map((s) => s.calories),
+                      2500
+                    );
                     const heightPercent = (stat.calories / maxCal) * 100;
-                    
+
                     return (
                       <div key={idx} className="flex flex-col items-center">
                         <div className="relative h-48 w-full flex items-end justify-center">
@@ -262,33 +289,54 @@ export default function Planner() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-xs text-muted-foreground mb-1">Total Calories</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Total Calories
+                      </div>
                       <div className="text-2xl font-bold text-primary">
-                        {Math.round(weekStats.reduce((sum, s) => sum + s.calories, 0))}
+                        {Math.round(
+                          weekStats.reduce((sum, s) => sum + s.calories, 0)
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-xs text-muted-foreground mb-1">Average Daily</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Average Daily
+                      </div>
                       <div className="text-2xl font-bold text-primary">
-                        {Math.round(weekStats.reduce((sum, s) => sum + s.calories, 0) / 7)}
+                        {Math.round(
+                          weekStats.reduce((sum, s) => sum + s.calories, 0) / 7
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-xs text-muted-foreground mb-1">Max Day</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Max Day
+                      </div>
                       <div className="text-2xl font-bold text-primary">
-                        {Math.round(Math.max(...weekStats.map(s => s.calories), 0))}
+                        {Math.round(
+                          Math.max(...weekStats.map((s) => s.calories), 0)
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-xs text-muted-foreground mb-1">Min Day</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Min Day
+                      </div>
                       <div className="text-2xl font-bold text-primary">
-                        {Math.round(Math.min(...weekStats.map(s => s.calories).filter(c => c > 0), 2500))}
+                        {Math.round(
+                          Math.min(
+                            ...weekStats
+                              .map((s) => s.calories)
+                              .filter((c) => c > 0),
+                            2500
+                          )
+                        )}
                       </div>
                     </CardContent>
                   </Card>

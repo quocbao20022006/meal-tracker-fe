@@ -29,8 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   CreateMealPlanRequest,
-  CreateMealPlanTemplateRequest,
-  MealPlanRequest,
   MealPlanResponse,
   PlanType,
   UpdateMealPlanRequest,
@@ -39,6 +37,7 @@ import * as mealPlanService from "../services/meal-plan.service";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { formatDate } from "@/utils";
 import { MEAL_PLAN_ALREADY_HAD_MEAL_PLAN_ITEM } from "@/utils/messages";
+import ConfirmDialog from "@/components/ConfirmPopup";
 
 export default function Plans() {
   const navigate = useNavigate();
@@ -48,6 +47,8 @@ export default function Plans() {
   const [openEdit, setOpenEdit] = useState(false);
   const [editingPlan, setEditingPlan] = useState<MealPlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const { user } = useAuthContext();
 
   const [formData, setFormData] = useState<CreateMealPlanRequest>({
@@ -253,7 +254,6 @@ export default function Plans() {
   };
 
   const getStatusBadge = (plan: MealPlanResponse) => {
-    const daysLeft = getDaysUntilEnd(plan.endDate);
     if (!plan.isActive) {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
@@ -261,20 +261,6 @@ export default function Plans() {
         </span>
       );
     }
-    // if (daysLeft < 0) {
-    //   return (
-    //     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200">
-    //       Expired
-    //     </span>
-    //   );
-    // }
-    // if (daysLeft < 7) {
-    //   return (
-    //     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-200 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">
-    //       Ending Soon
-    //     </span>
-    //   );
-    // }
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-200">
         Active
@@ -322,6 +308,14 @@ export default function Plans() {
                 </DialogHeader>
 
                 <form onSubmit={handleCreatePlan} className="space-y-4">
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      <p className="text-red-800 dark:text-red-200 text-sm">
+                        {error}
+                      </p>
+                    </div>
+                  )}
                   {/* Plan Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -357,7 +351,7 @@ export default function Plans() {
                   </div>
 
                   {/* Goal */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                       Goal
                     </label>
@@ -374,7 +368,7 @@ export default function Plans() {
                       }
                       placeholder="e.g., Lose weight, Build muscle, Maintain health"
                     />
-                  </div>
+                  </div> */}
 
                   {/* Start Date */}
                   <div>
@@ -613,7 +607,7 @@ export default function Plans() {
             </div>
 
             {/* Goal */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Goal
               </label>
@@ -630,7 +624,7 @@ export default function Plans() {
                 }
                 placeholder="e.g., Lose weight, Build muscle, Maintain health"
               />
-            </div>
+            </div> */}
 
             {/* Start Date */}
             <div>
@@ -665,12 +659,13 @@ export default function Plans() {
               <Checkbox
                 id="isActive"
                 checked={formData.isActive ?? true}
-                onCheckedChange={(checked) =>
-                  setFormData({
-                    ...formData,
-                    isActive: checked as boolean,
-                  })
-                }
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setShowConfirm(true);
+                  } else {
+                    setFormData({ ...formData, isActive: false });
+                  }
+                }}
               />
               <label
                 htmlFor="isActive"
@@ -698,6 +693,16 @@ export default function Plans() {
               </Button>
             </div>
           </form>
+          <ConfirmDialog
+            open={showConfirm}
+            title="Activate meal plan?"
+            message="Another meal plan is already active. Activating this plan will deactivate the current one. Continue?"
+            onCancel={() => setShowConfirm(false)}
+            onConfirm={() => {
+              setFormData({ ...formData, isActive: true });
+              setShowConfirm(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
