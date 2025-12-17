@@ -31,9 +31,9 @@ export function useMealPlans() {
     return mealPlanService.getWeekMealPlans(startDate);
   }, []);
 
-  const completeMealPlan = useCallback(async (id: number) => {
-    return mealPlanService.completeMealPlan(id);
-  }, []);
+  // const completeMealPlan = useCallback(async (id: number) => {
+  //   return mealPlanService.completeMealPlan(id);
+  // }, []);
 
   return {
     mealPlans,
@@ -42,7 +42,7 @@ export function useMealPlans() {
     fetchMealPlans,
     
     createMealPlan: createMealPlan.mutate,
-    createMealPlanLoading: createMealPlan.loading,
+    createMealPlanLoading: createMealPlan.loading,  
     
     updateMealPlan: updateMealPlan.mutate,
     updateMealPlanLoading: updateMealPlan.loading,
@@ -52,6 +52,6 @@ export function useMealPlans() {
     
     getMealPlansByDate,
     getWeekMealPlans,
-    completeMealPlan,
+      // completeMealPlan,
   };
 }

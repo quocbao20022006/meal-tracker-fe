@@ -5,7 +5,7 @@ import { useMealPlans } from "../hooks/useMealPlans";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { MealPlan } from "../types";
 import BarChart from "../components/CaloriesBarChart";
-import WeightLineChart from "@/components/WeightLineChart";
+// import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
@@ -176,9 +176,9 @@ export default function Dashboard() {
             <BarChart />
           </div>
 
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+          {/* <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
             <WeightLineChart userId={1} />
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

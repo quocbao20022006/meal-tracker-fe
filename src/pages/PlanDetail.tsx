@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Calendar, Flame } from "lucide-react";
+import { ArrowLeft, Plus, Calendar, Flame, CheckCircle, Circle } from "lucide-react";
 import Header from "../components/Header";
 import MealCard from "../components/MealCard";
 import AddMealDialog from "../components/AddMealDialog";
@@ -28,6 +28,7 @@ export default function PlanDetail() {
     []
   );
   const [loading, setLoading] = useState(false);
+  const [toggling, setToggling] = useState(false);
   const [showAddMealModal, setShowAddMealModal] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>(
     MealType.BREAKFAST
@@ -223,6 +224,26 @@ export default function PlanDetail() {
     return mealPlanItems.reduce((sum, m) => sum + (m.meal?.calories || 0), 0);
   };
 
+  const handleToggleActive = async () => {
+    if (!plan || toggling) return;
+    
+    try {
+      setToggling(true);
+      await mealPlanService.toggleMealPlanActive(plan.id, plan);
+      setPlan((prevPlan) => {
+        if (!prevPlan) return null;
+        return {
+          ...prevPlan,
+          isActive: !prevPlan.isActive,
+        };
+      });
+    } catch (err) {
+      console.error("Failed to toggle plan active status:", err);
+    } finally {
+      setToggling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -264,15 +285,38 @@ export default function PlanDetail() {
           {/* Plan Info */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              {plan.note && (
-                <p className="text-muted-foreground mt-2">{plan.note}</p>
-              )}
-              {plan.targetCalories && (
-                <div className="text-sm text-primary font-medium mt-2">
-                  🎯 Goal: {plan.targetCalories}
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  {plan.note && (
+                    <p className="text-muted-foreground mt-2">{plan.note}</p>
+                  )}
+                  {plan.targetCalories && (
+                    <div className="text-sm text-primary font-medium mt-2">
+                      🎯 Goal: {plan.targetCalories}
+                    </div>
+                  )}
                 </div>
-              )}
+                <Button
+                  onClick={handleToggleActive}
+                  disabled={toggling}
+                  variant={plan.isActive ? "default" : "outline"}
+                  className={`flex items-center gap-2 whitespace-nowrap ml-4 ${
+                    plan.isActive
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {toggling ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>
+                  ) : plan.isActive ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
+                  {plan.isActive ? "Active" : "Inactive"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

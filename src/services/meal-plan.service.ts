@@ -1,4 +1,5 @@
 import * as httpClient from "../lib/http-client";
+import * as mealPlanItemService from "./meal-plan-item.service";
 import {
   MealPlan,
   CreateMealPlanRequest,
@@ -66,4 +67,63 @@ export const getMonthMealPlans = async (year: number, month: number) => {
     startDate.toISOString().split("T")[0],
     endDate.toISOString().split("T")[0]
   );
+};
+
+export const toggleMealPlanActive = async (
+  id: number,
+  currentPlan: MealPlanResponse
+) => {
+  const updatedRequest: UpdateMealPlanRequest = {
+    name: currentPlan.name,
+    targetCalories: currentPlan.targetCalories,
+    startDate: currentPlan.startDate,
+    endDate: currentPlan.endDate,
+    note: currentPlan.note,
+    isActive: !currentPlan.isActive,
+    planType: currentPlan.planType,
+  };
+  return updateMealPlan(id, updatedRequest);
+};
+
+export const getMealPlanItems = async (mealPlanId: number) => {
+  console.log('🔍 Getting meal plan items for mealPlanId:', mealPlanId);
+  const result = await mealPlanItemService.getMealPlanItemsByDate({ mealPlanId });
+  console.log('📋 Meal plan items result:', result);
+  return result;
+};
+
+export const getActiveMealPlanWithMeals = async (params: MealPlanRequest) => {
+  try {
+    console.log('📌 Starting getActiveMealPlanWithMeals for userId:', params.userId);
+    const result = await getAllMealPlans(params);
+    console.log('📌 All plans result:', result);
+    
+    if (result?.data?.content && Array.isArray(result.data.content)) {
+      const activePlan = result.data.content.find((plan: MealPlanResponse) => plan.isActive);
+      console.log('📌 Active plan:', activePlan);
+      
+      if (activePlan) {
+        // Get meals in the active plan
+        console.log('📌 Fetching meals for plan id:', activePlan.id);
+        const mealsResult = await getMealPlanItems(activePlan.id);
+        console.log('📌 Meals result:', mealsResult);
+        
+        const meals = mealsResult?.data?.content || [];
+        console.log('📌 Parsed meals:', meals);
+        
+        return { 
+          data: {
+            plan: activePlan,
+            meals
+          }, 
+          error: null 
+        };
+      }
+    }
+    console.log('⚠️ No active plan found');
+    return { data: null, error: null };
+  } catch (error) {
+    console.error('❌ Error in getActiveMealPlanWithMeals:', error);
+    return { data: null, error };
+  }
 };

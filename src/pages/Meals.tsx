@@ -75,6 +75,8 @@ export default function Meals() {
     setFilteredMeals(filtered);
   }, [meals, searchQuery, selectedType]);
 
+
+
   const mealTypes = [
     { id: "all", label: "All Meals" },
     { id: "appetizer", label: "Appetizers" },
@@ -174,7 +176,8 @@ export default function Meals() {
               <MealCard
                 key={meal.id}
                 meal={meal}
-                onViewMeal={(id) => navigate(`/meals/${id}`)}
+                onViewMeal={() => navigate(`/meal/${meal.id}`)}
+                onSelect={() => {}}
               />
             ))}
           </div>
