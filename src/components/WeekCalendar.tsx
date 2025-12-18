@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 
+interface WeekCalendarProps {
+  onDateChange?: (date: string) => void;
+}
+
 // Helper: get dates of current week (Sunday → Saturday)
 function getCurrentWeekDates(refDate: Date = new Date()) {
   const weekStart = new Date(refDate);
@@ -20,7 +24,7 @@ function formatDate(date: Date) {
   return `${dayNames[date.getDay()]} ${date.getDate()}`;
 }
 
-export default function WeekCalendar() {
+export default function WeekCalendar({ onDateChange }: WeekCalendarProps) {
   const today = new Date();
   const [weekDates, setWeekDates] = useState<Date[]>(getCurrentWeekDates());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -30,6 +34,7 @@ export default function WeekCalendar() {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
     setSelectedDate(newDate);
+    onDateChange?.(newDate.toISOString().split("T")[0]);
 
     // update week if date goes out of current week
     if (!weekDates.some(d => d.toDateString() === newDate.toDateString())) {
@@ -42,6 +47,7 @@ export default function WeekCalendar() {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() + 1);
     setSelectedDate(newDate);
+    onDateChange?.(newDate.toISOString().split("T")[0]);
 
     // update week if date goes out of current week
     if (!weekDates.some(d => d.toDateString() === newDate.toDateString())) {
@@ -77,7 +83,10 @@ export default function WeekCalendar() {
           return (
             <div
               key={date.toDateString()}
-              onClick={() => setSelectedDate(date)}
+              onClick={() => {
+                setSelectedDate(date);
+                onDateChange?.(date.toISOString().split("T")[0]);
+              }}
               className={`flex-1 py-3 rounded-2xl cursor-pointer flex flex-col items-center justify-center transition
                 ${
                   selected

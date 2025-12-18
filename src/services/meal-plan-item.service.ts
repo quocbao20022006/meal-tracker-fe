@@ -4,6 +4,7 @@ import {
   MealPlanItemRequest,
   MealPlanItemResponse,
   PaginatedMealPlanItems,
+  ActivePlanResponse,
 } from "../types";
 
 export const getMealPlanItemsByDate = async (params: MealPlanItemRequest) => {
@@ -23,3 +24,9 @@ export const createMealPlanItem = async (
 export const deleteMealPlanItem = async (id: number) => {
   return httpClient.httpDelete(`/meal-plan-item/delete/${id}`);
 };
+
+export const getActivePlan = async (userId: number) => {
+  return httpClient.get<ActivePlanResponse>(
+    `/meal-plan-item/active-plan/${userId}`
+  );
+}
