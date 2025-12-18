@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
-import { Clock, Flame, TrendingUp, Plus } from "lucide-react";
+import { Clock, Flame, TrendingUp, Plus, Scale } from "lucide-react";
 import Header from "../components/Header";
 import { useMealPlans } from "../hooks/useMealPlans";
 import { MealPlan, UserProfile } from "../types";
 import BarChart from "../components/CaloriesBarChart";
-// import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
+import WeightUpdateModal from "@/components/WeightUpdateModal";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { get, set } from "react-hook-form";
 import { getProfile } from "@/services/user-profile.service";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
   const { mealPlans, loading: mealsLoading } = useMealPlans();
-  // const { profile, loading: profileLoading } = useUserProfile(user?.id || 0);
   const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [profile, setProfile] = useState<UserProfile | null>();
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
 
+  const consumedCalories = 1500; // Đợi gán tổng calories các meal trong ngày
 
-  const consumedCalories = 0; // Đợi gán tổng calories các meal trong ngày
   useEffect(() => {
     const fetchData = async () => {
       loadDashboardData();
@@ -42,6 +41,12 @@ export default function Dashboard() {
     }
 
     setLoading(mealsLoading);
+  };
+
+  const handleWeightUpdateSuccess = async (newWeight: number) => {
+    // Reload profile to get updated data
+    const data = await getProfile(user?.id ?? 0);
+    setProfile(data.data);
   };
 
   const getPlanType = (): "Moderate" | "High" | "Low" => {
@@ -83,6 +88,17 @@ export default function Dashboard() {
 
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
+          {/* Update Weight Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsWeightModalOpen(true)}
+              className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all flex items-center gap-2"
+            >
+              <Scale className="w-5 h-5" />
+              Update Weight
+            </button>
+          </div>
+
           <div className="mt-8 flex justify-between items-stretch gap-10">
             {/* Daily Calories Donut */}
             <div className="w-full bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md flex-1 flex items-center justify-center">
@@ -182,12 +198,20 @@ export default function Dashboard() {
           <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
             <BarChart />
           </div>
-
-          {/* <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <WeightLineChart userId={1} />
-          </div> */}
         </div>
       </div>
+
+      {/* Weight Update Modal */}
+      {profile && (
+        <WeightUpdateModal
+          open={isWeightModalOpen}
+          onOpenChange={setIsWeightModalOpen}
+          currentWeight={profile.weight || 0}
+          targetWeight={profile.weightGoal}
+          userId={profile.id}
+          onUpdateSuccess={handleWeightUpdateSuccess}
+        />
+      )}
     </div>
   );
 }

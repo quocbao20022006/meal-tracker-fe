@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { User, Scale, TrendingUp, Target, Save, Calendar, Activity, Award } from 'lucide-react';
+import WeightUpdateModal from '../components/WeightUpdateModal';
 
 // Mock Header component
 function Header({ title }: { title: string }) {
@@ -16,6 +17,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -134,6 +136,11 @@ export default function Profile() {
     }
   };
 
+  const handleWeightUpdateSuccess = (newWeight: number) => {
+    // Reload profile to get updated data
+    loadProfile();
+  };
+
   const getBMICategoryColor = (category: string) => {
     switch (category) {
       case 'Underweight': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/30';
@@ -200,14 +207,24 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end gap-3 mb-6">
               {!editing ? (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all"
-                >
-                  Edit Profile
-                </button>
+                <>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={() => setIsWeightModalOpen(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center gap-2"
+                  >
+                    <Scale className="w-4 h-4" />
+                    Update Weight
+                  </button>
+                </>
               ) : (
                 <div className="flex gap-2">
                   <button
@@ -536,6 +553,18 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Weight Update Modal */}
+      {profile && (
+        <WeightUpdateModal
+          open={isWeightModalOpen}
+          onOpenChange={setIsWeightModalOpen}
+          currentWeight={profile.weight || 0}
+          targetWeight={profile.weight_goal}
+          userId={profile.user_id}
+          onUpdateSuccess={handleWeightUpdateSuccess}
+        />
+      )}
     </div>
   );
 }
