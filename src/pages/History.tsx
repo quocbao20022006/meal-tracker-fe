@@ -80,18 +80,6 @@ export default function History() {
     ? Math.round(stats.reduce((sum, s) => sum + s.calories, 0) / stats.length)
     : 0;
 
-  const avgProtein = stats.length > 0
-    ? Math.round(stats.reduce((sum, s) => sum + s.protein, 0) / stats.length)
-    : 0;
-
-  const avgCarbs = stats.length > 0
-    ? Math.round(stats.reduce((sum, s) => sum + s.carbs, 0) / stats.length)
-    : 0;
-
-  const avgFats = stats.length > 0
-    ? Math.round(stats.reduce((sum, s) => sum + s.fats, 0) / stats.length)
-    : 0;
-
   const maxCalories = stats.length > 0
     ? Math.max(...stats.map(s => s.calories))
     : 0;
@@ -133,42 +121,13 @@ export default function History() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Avg Calories</span>
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
-              </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{avgCalories}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">per day</p>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Avg Calories</span>
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
             </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Avg Protein</span>
-                <TrendingUp className="w-4 h-4 text-red-500" />
-              </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{avgProtein}g</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">per day</p>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Avg Carbs</span>
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-              </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{avgCarbs}g</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">per day</p>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Avg Fats</span>
-                <TrendingUp className="w-4 h-4 text-yellow-500" />
-              </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{avgFats}g</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">per day</p>
-            </div>
+            <p className="text-3xl font-bold text-gray-800 dark:text-white">{avgCalories}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">per day</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
@@ -214,71 +173,6 @@ export default function History() {
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
-              Macronutrient Distribution
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Protein
-                  </span>
-                  <span className="text-sm font-bold text-red-600">
-                    {avgProtein}g
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="bg-red-500 h-full rounded-full"
-                    style={{
-                      width: `${avgProtein + avgCarbs + avgFats > 0 ? (avgProtein / (avgProtein + avgCarbs + avgFats)) * 100 : 0}%`
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Carbs
-                  </span>
-                  <span className="text-sm font-bold text-blue-600">
-                    {avgCarbs}g
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="bg-blue-500 h-full rounded-full"
-                    style={{
-                      width: `${avgProtein + avgCarbs + avgFats > 0 ? (avgCarbs / (avgProtein + avgCarbs + avgFats)) * 100 : 0}%`
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Fats
-                  </span>
-                  <span className="text-sm font-bold text-yellow-600">
-                    {avgFats}g
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="bg-yellow-500 h-full rounded-full"
-                    style={{
-                      width: `${avgProtein + avgCarbs + avgFats > 0 ? (avgFats / (avgProtein + avgCarbs + avgFats)) * 100 : 0}%`
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

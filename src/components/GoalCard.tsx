@@ -1,4 +1,5 @@
 import MetricCard from "./MetricCard";
+import { Edit2 } from "lucide-react";
 
 interface GoalCardProps {
   targetWeight: number;
@@ -7,6 +8,7 @@ interface GoalCardProps {
   dailyCalories: number;
   planType: "Moderate" | "High" | "Low";
   description?: string;
+  onWeightUpdate?: () => void;
 }
 
 export default function GoalCard({
@@ -16,6 +18,7 @@ export default function GoalCard({
   dailyCalories,
   planType,
   description = "Your personalized plan to reach the target weight",
+  onWeightUpdate,
 }: GoalCardProps) {
   // Plan color mapping
   const planColors: Record<string, string> = {
@@ -78,13 +81,19 @@ export default function GoalCard({
       {/* Progress Status */}
       {targetWeight > 0 && (
         <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-          <div className="flex justify-between items-center">
+          <div 
+            className="flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-2 py-1 rounded transition-all group"
+            onClick={onWeightUpdate}
+          >
             <span className="text-sm text-gray-600 dark:text-gray-300">
               Current Weight:
             </span>
-            <span className="text-sm font-semibold text-gray-800 dark:text-white">
-              {currentWeight} kg
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-800 dark:text-white">
+                {currentWeight} kg
+              </span>
+              <Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 transition-colors" />
+            </div>
           </div>
 
           {!isGoalAchieved && (

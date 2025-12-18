@@ -3,6 +3,7 @@ import {
   CreateMealPlanItemRequest,
   MealPlanItemRequest,
   MealPlanItemResponse,
+  MealPlanResponse,
   PaginatedMealPlanItems,
   ActivePlanResponse,
 } from "../types";
@@ -30,3 +31,9 @@ export const getActivePlan = async (userId: number) => {
     `/meal-plan-item/active-plan/${userId}`
   );
 }
+
+export const getMealPlanItemsOfActiveMealPlan = async (userId: number) => {
+  return httpClient.get<MealPlanResponse>(
+    `/meal-plan-item/active-plan/${userId}`
+  );
+};

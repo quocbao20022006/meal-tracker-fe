@@ -4,10 +4,10 @@ import { Clock, Flame, Plus } from "lucide-react";
 import Header from "../components/Header";
 import { ActivePlanResponse, UserProfile } from "../types";
 import BarChart from "../components/CaloriesBarChart";
-// import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
+import WeightUpdateModal from "@/components/WeightUpdateModal";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getProfile } from "@/services/user-profile.service";
 import { getActivePlan } from "@/services/meal-plan-item.service";
@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>();
   const [activePlan, setActivePlan] = useState<ActivePlanResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +33,12 @@ export default function Dashboard() {
     };
     fetchData();
   }, [user?.id]);
+
+  const handleWeightUpdateSuccess = async () => {
+    // Reload profile to get updated data
+    const data = await getProfile(user?.id ?? 0);
+    setProfile(data.data);
+  };
 
   const getPlanType = (): "Moderate" | "High" | "Low" => {
     if (!profile?.goal) return "Moderate";
@@ -91,7 +99,7 @@ export default function Dashboard() {
             </div>
 
             {/* Goal Card */}
-            <div className="w-full flex-1">
+            <div className="w-full flex-1 relative">
               <GoalCard
                 targetWeight={profile?.weightGoal || profile?.weight || 0}
                 currentWeight={profile?.weight || 0}
@@ -103,6 +111,7 @@ export default function Dashboard() {
                     ? `Your personalized ${getPlanType().toLowerCase()} plan to ${profile.goal.replace('_', ' ')}`
                     : "Your personalized plan to reach the target weight"
                 }
+                onWeightUpdate={() => setIsWeightModalOpen(true)}
               />
             </div>
           </div>
@@ -132,7 +141,8 @@ export default function Dashboard() {
                         (meal) => (
                           <div
                             key={meal.mealPlanItemId}
-                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl"
+                            onClick={() => navigate(`/meal/${meal.mealId}`)}
+                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-all"
                           >
                             {meal.imageUrl && (
                               <img
@@ -177,14 +187,27 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <BarChart />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+              Weekly Calorie Intake
+            </h3>
+            <div className="h-80">
+              <BarChart activePlan={activePlan} days={7} />
+            </div>
           </div>
-
-          {/* <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <WeightLineChart userId={1} />
-          </div> */}
         </div>
       </div>
+
+      {/* Weight Update Modal */}
+      {profile && (
+        <WeightUpdateModal
+          open={isWeightModalOpen}
+          onOpenChange={setIsWeightModalOpen}
+          currentWeight={profile.weight || 0}
+          targetWeight={profile.weightGoal}
+          userId={profile.id}
+          onUpdateSuccess={handleWeightUpdateSuccess}
+        />
+      )}
     </div>
   );
 }

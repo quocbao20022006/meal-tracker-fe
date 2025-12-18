@@ -1,4 +1,4 @@
-import { Home, Utensils, History, BookOpen, Calendar, User, LogOut } from 'lucide-react';
+import { Home, Utensils, BookOpen, Calendar, User, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 
@@ -21,7 +21,6 @@ export default function Sidebar() {
     { id: 'meals', label: 'Meals', icon: Utensils, path: '/meals' },
     { id: 'planner', label: 'Planner', icon: BookOpen, path: '/planner' },
     { id: 'plans', label: 'Plans', icon: Calendar, path: '/plans' },
-    { id: 'history', label: 'History', icon: History, path: '/history' },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
   ];
 
