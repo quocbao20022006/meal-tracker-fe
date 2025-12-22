@@ -8,7 +8,6 @@ import WeekDateSlider from "../components/WeekDateSlider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  CreateMealPlanItemRequest,
   MEAL_TYPES,
   MealPlanItemResponse,
   MealPlanResponse,
@@ -36,7 +35,6 @@ export default function PlanDetail() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [selectedMeal, setSelectedMeal] = useState<MealResponse | null>(null);
 
   const [mealsByType, setMealsByType] = useState<
     Record<string, MealPlanItemResponse[]>
@@ -125,8 +123,8 @@ export default function PlanDetail() {
         })
       );
 
-      setMealPlanItems(itemsWithMeals);
-
+      const validItems = itemsWithMeals.filter((item): item is MealPlanItemResponse & { meal: MealResponse } => item.meal !== null);
+      setMealPlanItems(validItems as MealPlanItemResponse[]);
       // Group by mealType
       const grouped: Record<string, MealPlanItemResponse[]> = {
         BREAKFAST: [],
@@ -135,7 +133,7 @@ export default function PlanDetail() {
         SNACK: [],
       };
 
-      itemsWithMeals.forEach((item) => {
+      validItems.forEach((item) => {
         if (grouped[item.mealType]) {
           grouped[item.mealType].push(item);
         }
@@ -391,7 +389,6 @@ export default function PlanDetail() {
                     <Button
                       onClick={() => {
                         setSelectedMealType(type as MealType);
-                        setSelectedMeal(null);
                         setShowAddMealModal(true);
                       }}
                       className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all"
@@ -409,7 +406,8 @@ export default function PlanDetail() {
                           <MealCard
                             key={mealItem.id}
                             meal={mealItem.meal}
-                            onViewMeal={(id) => navigate(`/meals/${id}`)}
+                            onViewMeal={() => navigate(`/meal/${mealItem.mealId}`)}
+                            onSelect={() => navigate(`/meal/${mealItem.mealId}`)}
                           />
                           <button
                             onClick={() => handleDeleteMeal(mealItem.id, type)}
@@ -441,7 +439,7 @@ export default function PlanDetail() {
       <AddMealDialog
         open={showAddMealModal}
         onOpenChange={setShowAddMealModal}
-        mealPlanId={+planId}
+        mealPlanId={+(planId || 0)}
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
         selectedMealType={selectedMealType}

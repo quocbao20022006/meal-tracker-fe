@@ -349,6 +349,37 @@ export interface CategoryResponseList {
   number: number;
   size: number;
 }
+// Active Plan with Meals by Date
+export interface MealInPlanItem {
+  mealPlanItemId: number;
+  mealId: number;
+  mealName: string;
+  calories: number;
+  mealDescription: string;
+  imageUrl: string;
+  cookingTime: string;
+  servings: number;
+  mealType: MealType;
+  mealDate: string;
+  categoryNames: string[];
+}
+
+export interface ActivePlanResponse {
+  id: number;
+  name: string;
+  userId: number;
+  targetCalories: number;
+  startDate: string;
+  endDate: string;
+  note: string;
+  planType: PlanType;
+  isActive: boolean;
+  mealsByDate: {
+    [date: string]: MealInPlanItem[];
+  };
+  createdAt: number;
+  updatedAt: number;
+}
 
 export const DayNames = [
   "Sunday",

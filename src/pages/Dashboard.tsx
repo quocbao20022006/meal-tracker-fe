@@ -1,47 +1,43 @@
 import { useEffect, useState } from "react";
-import { Clock, Flame, TrendingUp, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Clock, Flame, Plus } from "lucide-react";
 import Header from "../components/Header";
-import { useMealPlans } from "../hooks/useMealPlans";
-import { MealPlan, UserProfile } from "../types";
+import { ActivePlanResponse, UserProfile } from "../types";
 import BarChart from "../components/CaloriesBarChart";
-// import WeightLineChart from "@/components/WeightLineChart";
 import DailyCaloriesDonutChart from "@/components/DailyCaloriesDonutChart";
 import GoalCard from "@/components/GoalCard";
 import WeekCalendar from "@/components/WeekCalendar";
+import WeightUpdateModal from "@/components/WeightUpdateModal";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { get, set } from "react-hook-form";
 import { getProfile } from "@/services/user-profile.service";
+import { getActivePlan } from "@/services/meal-plan-item.service";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { mealPlans, loading: mealsLoading } = useMealPlans();
-  // const { profile, loading: profileLoading } = useUserProfile(user?.id || 0);
-  const [todayMeals, setTodayMeals] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [profile, setProfile] = useState<UserProfile | null>();
+  const [activePlan, setActivePlan] = useState<ActivePlanResponse | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
 
 
-  const consumedCalories = 0; // Đợi gán tổng calories các meal trong ngày
   useEffect(() => {
     const fetchData = async () => {
-      loadDashboardData();
       const data = await getProfile(user?.id ?? 0);
       setProfile(data.data);
+      const activePlanData = await getActivePlan(user?.id ?? 0);
+      setActivePlan(activePlanData.data);
+      setLoading(false);
     };
-
     fetchData();
-  }, []);
+  }, [user?.id]);
 
-  const loadDashboardData = async () => {
-    const today = new Date().toISOString().split("T")[0];
-
-    if (mealPlans && mealPlans.length > 0) {
-      const filtered = mealPlans.filter((mp) => mp.date === today);
-      setTodayMeals(filtered);
-    }
-
-    setLoading(mealsLoading);
+  const handleWeightUpdateSuccess = async () => {
+    // Reload profile to get updated data
+    const data = await getProfile(user?.id ?? 0);
+    setProfile(data.data);
   };
 
   const getPlanType = (): "Moderate" | "High" | "Low" => {
@@ -58,12 +54,21 @@ export default function Dashboard() {
     }
   };
 
+  // Get today's meals from activePlan
+  const todayMealsFromPlan = activePlan?.mealsByDate[selectedDate] || [];
+
   const mealsByType = {
-    breakfast: todayMeals.filter((mp) => mp.mealType === "breakfast"),
-    lunch: todayMeals.filter((mp) => mp.mealType === "lunch"),
-    dinner: todayMeals.filter((mp) => mp.mealType === "dinner"),
-    snack: todayMeals.filter((mp) => mp.mealType === "snack"),
+    BREAKFAST: todayMealsFromPlan.filter((m) => m.mealType === "BREAKFAST"),
+    LUNCH: todayMealsFromPlan.filter((m) => m.mealType === "LUNCH"),
+    DINNER: todayMealsFromPlan.filter((m) => m.mealType === "DINNER"),
+    SNACK: todayMealsFromPlan.filter((m) => m.mealType === "SNACK"),
   };
+
+  // Calculate consumed calories
+  const consumedCalories = todayMealsFromPlan.reduce(
+    (total, meal) => total + meal.calories,
+    0
+  );
 
   if (loading) {
     return (
@@ -94,7 +99,7 @@ export default function Dashboard() {
             </div>
 
             {/* Goal Card */}
-            <div className="w-full flex-1">
+            <div className="w-full flex-1 relative">
               <GoalCard
                 targetWeight={profile?.weightGoal || profile?.weight || 0}
                 currentWeight={profile?.weight || 0}
@@ -106,12 +111,13 @@ export default function Dashboard() {
                     ? `Your personalized ${getPlanType().toLowerCase()} plan to ${profile.goal.replace('_', ' ')}`
                     : "Your personalized plan to reach the target weight"
                 }
+                onWeightUpdate={() => setIsWeightModalOpen(true)}
               />
             </div>
           </div>
 
           <div className="w-full">
-            <WeekCalendar />
+            <WeekCalendar onDateChange={setSelectedDate} />
           </div>
 
           <div>
@@ -120,45 +126,43 @@ export default function Dashboard() {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {["breakfast", "lunch", "dinner", "snack"].map((type) => (
+              {["BREAKFAST", "LUNCH", "DINNER", "SNACK"].map((type) => (
                 <div
                   key={type}
                   className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm"
                 >
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 capitalize">
-                    {type}
+                    {type.toLowerCase()}
                   </h3>
 
                   {mealsByType[type as keyof typeof mealsByType].length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {mealsByType[type as keyof typeof mealsByType].map(
-                        (mp) => (
+                        (meal) => (
                           <div
-                            key={mp.id}
-                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl"
+                            key={meal.mealPlanItemId}
+                            onClick={() => navigate(`/meal/${meal.mealId}`)}
+                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-all"
                           >
-                            {mp.meal?.imageUrl && (
+                            {meal.imageUrl && (
                               <img
-                                src={mp.meal.imageUrl ?? ""}
-                                alt={mp.meal.name ?? ""}
+                                src={meal.imageUrl}
+                                alt={meal.mealName}
                                 className="w-16 h-16 rounded-lg object-cover"
                               />
                             )}
-                            <div className="flex-1">
+                            <div className="flex-1 w-auto">
                               <h4 className="font-semibold text-gray-800 dark:text-white">
-                                {mp.meal?.name}
+                                {meal.mealName}
                               </h4>
                               <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                                 <span className="flex items-center gap-1">
                                   <Flame className="w-3 h-3" />
-                                  {Math.round(
-                                    (mp.meal?.calories || 0) * mp.servings
-                                  )}{" "}
-                                  cal
+                                  {Math.round(meal.calories)} cal
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  {mp.meal?.cookingTime || 0} min
+                                  {meal.cookingTime}
                                 </span>
                               </div>
                             </div>
@@ -167,10 +171,13 @@ export default function Dashboard() {
                       )}
                     </div>
                   ) : (
-                    <button className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-emerald-400 dark:hover:border-emerald-500 transition-all group">
+                    <button 
+                      onClick={() => navigate(`/plans/${activePlan?.id}`)}
+                      className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-emerald-400 dark:hover:border-emerald-500 transition-all group"
+                    >
                       <Plus className="w-6 h-6 mx-auto text-gray-400 group-hover:text-emerald-500" />
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Add meal
+                        Add Meal
                       </p>
                     </button>
                   )}
@@ -180,14 +187,27 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <BarChart />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+              Weekly Calorie Intake
+            </h3>
+            <div className="h-80">
+              <BarChart activePlan={activePlan} days={7} />
+            </div>
           </div>
-
-          {/* <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <WeightLineChart userId={1} />
-          </div> */}
         </div>
       </div>
+
+      {/* Weight Update Modal */}
+      {profile && (
+        <WeightUpdateModal
+          open={isWeightModalOpen}
+          onOpenChange={setIsWeightModalOpen}
+          currentWeight={profile.weight || 0}
+          targetWeight={profile.weightGoal}
+          userId={profile.id}
+          onUpdateSuccess={handleWeightUpdateSuccess}
+        />
+      )}
     </div>
   );
 }

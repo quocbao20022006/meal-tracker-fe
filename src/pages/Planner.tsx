@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Flame, TrendingUp } from "lucide-react";
 import Header from "../components/Header";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import * as mealPlanService from "../services/meal-plan.service";
 
 export default function Planner() {
+  const navigate = useNavigate();
   const [currentWeek, setCurrentWeek] = useState(getWeekDates(new Date()));
   const [viewMode, setViewMode] = useState<"week" | "stats">("week");
   const [filteredMeals, setFilteredMeals] = useState<MealPlanItemResponse[]>(
@@ -29,9 +31,6 @@ export default function Planner() {
   const [weekStats, setWeekStats] = useState<any[]>([]);
   const { user } = useAuthContext();
   const [activePlan, setActivePlan] = useState<MealPlanResponse | null>(null);
-  const [activePlanMeals, setActivePlanMeals] = useState<
-    MealPlanItemResponse[]
-  >([]);
   const [loadingPlan, setLoadingPlan] = useState(false);
 
   useEffect(() => {
@@ -60,11 +59,9 @@ export default function Planner() {
         console.log("✅ Active plan found:", result.data.plan);
         console.log("🍽️ Meals in plan:", result.data.meals);
         setActivePlan(result.data.plan);
-        setActivePlanMeals(result.data.meals);
       } else {
         console.log("⚠️ No active plan found");
         setActivePlan(null);
-        setActivePlanMeals([]);
       }
     } catch (err) {
       console.error("❌ Error loading active plan:", err);
@@ -119,7 +116,12 @@ export default function Planner() {
       const dateStr = date.toISOString().split("T")[0];
       const dayMeals = filteredMeals.filter((mp) => mp.mealDate === dateStr);
       const calories = dayMeals.reduce(
-        (sum, mp) => sum + (mp.meal?.calories || 0),
+        (sum, mp) => {
+          if (mp.meal) {
+            return sum + (mp.meal.calories || mp.calories || 0);
+          }
+          return sum + (mp.calories || 0);
+        },
         0
       );
 
@@ -172,68 +174,6 @@ export default function Planner() {
 
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Active Plan Card */}
-          {activePlan && (
-            <Card className="mb-6 border-l-4 border-l-primary bg-primary/5">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{activePlan.name}</CardTitle>
-                    <CardDescription>
-                      {new Date(activePlan.startDate).toLocaleDateString()} -{" "}
-                      {new Date(activePlan.endDate).toLocaleDateString()}
-                    </CardDescription>
-                  </div>
-                  {activePlan.targetCalories && (
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">
-                        {activePlan.targetCalories}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        cal/day
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              {activePlan.note && (
-                <CardContent className="pb-4">
-                  <p className="text-sm text-muted-foreground">
-                    {activePlan.note}
-                  </p>
-                </CardContent>
-              )}
-              {activePlanMeals.length > 0 && (
-                <CardContent className="pt-0">
-                  <div className="text-sm font-semibold mb-3 text-muted-foreground">
-                    Meals ({activePlanMeals.length})
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {activePlanMeals.map((meal) => (
-                      <div
-                        key={meal.id}
-                        className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
-                      >
-                        <div className="text-xs font-medium text-primary mb-1">
-                          {meal.mealType}
-                        </div>
-                        <div className="text-sm font-medium text-foreground truncate">
-                          {meal.meal?.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {meal.meal?.calories} cal
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(meal.mealDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          )}
-
           {loadingPlan && (
             <Card className="mb-6">
               <CardContent className="pt-6 flex items-center gap-2">
@@ -303,7 +243,8 @@ export default function Planner() {
                   return (
                     <Card
                       key={idx}
-                      className={isToday ? "ring-2 ring-primary" : ""}
+                      onClick={() => activePlan && navigate(`/plans/${activePlan.id}`)}
+                      className={`cursor-pointer hover:shadow-lg transition-all ${isToday ? "ring-2 ring-primary" : ""}`}
                     >
                       <CardHeader className="pb-3">
                         <div className="text-center">
@@ -448,14 +389,16 @@ export default function Planner() {
                         Min Day
                       </div>
                       <div className="text-2xl font-bold text-primary">
-                        {Math.round(
-                          Math.min(
-                            ...weekStats
-                              .map((s) => s.calories)
-                              .filter((c) => c > 0),
-                            2500
-                          )
-                        )}
+                        {weekStats.length > 0
+                          ? Math.round(
+                              Math.min(
+                                ...weekStats
+                                  .map((s) => s.calories)
+                                  .filter((c) => c > 0),
+                                2500
+                              )
+                            )
+                          : 0}
                       </div>
                     </CardContent>
                   </Card>
