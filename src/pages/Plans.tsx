@@ -48,12 +48,13 @@ export default function Plans() {
   const [editingPlan, setEditingPlan] = useState<MealPlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirm2, setShowConfirm2] = useState(false);
 
   const { user } = useAuthContext();
 
   const [formData, setFormData] = useState<CreateMealPlanRequest>({
     name: "",
-    startDate: "",
+    startDate: formatDate(new Date()),
     endDate: "",
     isActive: true,
     planType: PlanType.WEEKLY,
@@ -253,16 +254,63 @@ export default function Plans() {
     return diffDays;
   };
 
+  const changeMealPlanStatus = async (mealPlan: MealPlanResponse) => {
+    if (new Date(mealPlan.endDate) < new Date()) {
+      setError("This meal plan is expired. Cannot update meal plan status.");
+      setShowConfirm2(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const body: UpdateMealPlanRequest = {
+        name: mealPlan.name,
+        endDate: mealPlan.endDate,
+        startDate: mealPlan.startDate,
+        isActive: !mealPlan.isActive,
+        targetCalories: mealPlan.targetCalories,
+        note: mealPlan.note,
+        planType: mealPlan.planType,
+      };
+      const result = await mealPlanService.updateMealPlan(mealPlan?.id, body);
+      if (result.error) {
+        throw error;
+      }
+
+      await loadPlans();
+    } catch (err) {
+      console.error("Error updating plan:", err);
+      setError("Failed to update plan");
+    } finally {
+      setLoading(false);
+      setShowConfirm2(false);
+    }
+  };
+
   const getStatusBadge = (plan: MealPlanResponse) => {
     if (!plan.isActive) {
       return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+        <span
+          onClick={() => {
+            setEditingPlan(plan);
+            setShowConfirm2(true);
+          }}
+          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+        >
           Inactive
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-200">
+      <span
+        onClick={() => {
+          setEditingPlan(plan);
+          setShowConfirm2(true);
+        }}
+        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-200"
+      >
         Active
       </span>
     );
@@ -377,6 +425,7 @@ export default function Plans() {
                     </label>
                     <Input
                       type="date"
+                      min={formatDate(new Date())}
                       value={formData.startDate}
                       onChange={(e) =>
                         setFormData({ ...formData, startDate: e.target.value })
@@ -705,6 +754,14 @@ export default function Plans() {
           />
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={showConfirm2}
+        title="Activate meal plan?"
+        message="Another meal plan is already active. Activating this plan will deactivate the current one. Continue?"
+        onCancel={() => setShowConfirm2(false)}
+        onConfirm={() => changeMealPlanStatus(editingPlan!)}
+      />
     </div>
   );
 }
