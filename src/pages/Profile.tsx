@@ -263,6 +263,60 @@ export default function Profile() {
 
             {!editing && profile ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Goal Achievement Status */}
+                {profile.weight_goal && (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl md:col-span-2">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Award className="w-5 h-5 text-emerald-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Goal Status</span>
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      {profile.goal_achieved ? (
+                        <>
+                          <span className="text-2xl">🎉</span>
+                          <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                            Goal Achieved! You're within 0.5kg of your target weight.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-2xl">💪</span>
+                          <p className="text-xl font-bold text-gray-800 dark:text-white">
+                            Keep going! {Math.abs(profile.weight_difference || 0).toFixed(1)} kg to reach your goal.
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Progress Bar */}
+                    {(() => {
+                      const weightDiff = Math.abs(profile.weight_difference || 0);
+                      const estimatedStartDistance = weightDiff * 2.5;
+                      const progress = weightDiff > 0.5
+                        ? Math.max(0, Math.min(100, ((estimatedStartDistance - weightDiff) / estimatedStartDistance) * 100))
+                        : 100;
+
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                            <span>Current: {profile.weight} kg</span>
+                            <span>Target: {profile.weight_goal} kg</span>
+                          </div>
+                          <div className="w-full h-3 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 transition-all duration-500"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <div className="text-right text-xs text-gray-600 dark:text-gray-400">
+                            {progress.toFixed(0)}% complete
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
                 {/* Full Name */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
@@ -400,33 +454,6 @@ export default function Profile() {
                     {profile.goal ? getGoalLabel(profile.goal) : 'Not set'}
                   </p>
                 </div>
-
-                {/* Goal Achievement Status */}
-                {profile.weight_goal && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl md:col-span-2">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Award className="w-5 h-5 text-emerald-500" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Goal Status</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {profile.goal_achieved ? (
-                        <>
-                          <span className="text-2xl">🎉</span>
-                          <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                            Goal Achieved! You're within 0.5kg of your target weight.
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-2xl">💪</span>
-                          <p className="text-xl font-bold text-gray-800 dark:text-white">
-                            Keep going! {Math.abs(profile.weight_difference || 0).toFixed(1)} kg to reach your goal.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
