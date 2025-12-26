@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
-import { useUserProfile } from '../hooks/useUserProfile';
 import { User, Scale, Calendar, Users, Activity, Target, AlertCircle, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { ACTIVITY_LEVELS, GOAL_OPTIONS, ActivityLevel, GoalType } from '../types';
 import { validateWeightGoal, calculateBMI, getBMICategory } from '../utils/bmiHelper';
-import { calculateAge } from '../services/user-profile.service';
+import { calculateAge, createProfile as createProfileService } from '../services/user-profile.service';
 
 export default function Onboarding() {
   const { user, refreshAuth } = useAuthContext();
-  const { createProfile, createProfileLoading } = useUserProfile(user?.id || 0);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -68,7 +66,7 @@ export default function Onboarding() {
         return;
       }
 
-      await createProfile({
+      await createProfileService({
         height,
         weight,
         weightGoal,
@@ -477,10 +475,10 @@ export default function Onboarding() {
             )}
             <button
               onClick={handleNext}
-              disabled={loading || createProfileLoading}
+              disabled={loading}
               className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading || createProfileLoading ? 'Saving...' : step === 6 ? 'Complete' : 'Next'}
+              {loading ? 'Saving...' : step === 6 ? 'Complete' : 'Next'}
             </button>
           </div>
         </div>
